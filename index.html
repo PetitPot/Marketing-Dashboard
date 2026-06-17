@@ -131,6 +131,7 @@ let chartRefs={};
 let sortKey='sales',sortDir=-1;
 let prodSortKey='sales',prodSortDir=-1;
 let icipSortKey='sales',icipSortDir=-1;
+let trendFrom='',trendTo='';
 let icipProdMonth='';
 let trackerSummary=TRACKER_SUMMARY;
 let trackerCampaigns=TRACKER_CAMPAIGNS;
@@ -483,11 +484,35 @@ function sortProd(key){if(prodSortKey===key)prodSortDir*=-1;else{prodSortKey=key
 
 /* ============================================================  TREND  ============================================================ */
 function renderTrend(){
-  const weeks=allWeekKeys().filter(w=>{const d=getWeekData(w);return d?.campaigns?.length>0;});
-  if(weeks.length<2){$('content').innerHTML=`<div class="empty-state">Need at least 2 weeks of data.</div>`;return;}
+  const allWks=allWeekKeys().filter(w=>{const d=getWeekData(w);return d?.campaigns?.length>0;});
+  if(allWks.length<2){$('content').innerHTML=`<div class="empty-state">Need at least 2 weeks of data.</div>`;return;}
+  // Init range to last 13 weeks if not set
+  if(!trendFrom||!allWks.includes(trendFrom))trendFrom=allWks[Math.max(0,allWks.length-13)];
+  if(!trendTo||!allWks.includes(trendTo))trendTo=allWks[allWks.length-1];
+  if(trendFrom>trendTo)trendFrom=trendTo;
+  const weeks=allWks.filter(w=>w>=trendFrom&&w<=trendTo);
   const wkT=weeks.map(w=>{const d=getWeekData(w);const active=(d.campaigns||[]).filter(c=>c.spend>0);return{wk:w,lbl:fmtWeekLabel(w),...totals(active)};});
   const labels=wkT.map(t=>t.lbl);
-  $('content').innerHTML=`
+  const presets=[{label:'4W',n:4},{label:'8W',n:8},{label:'13W',n:13},{label:'26W',n:26},{label:'All',n:allWks.length}];
+  const selN=allWks.indexOf(trendTo)-allWks.indexOf(trendFrom)+1;
+  const rangeBar=`<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px;background:#fff;border:1px solid var(--g300);border-radius:6px;padding:10px 14px;">
+    <span style="font-size:12px;font-weight:700;color:var(--g700);">Range:</span>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;">
+      ${presets.map(p=>{const active=selN===p.n&&allWks.indexOf(trendTo)===allWks.length-1;return`<button onclick="setTrendPreset(${p.n})" style="padding:4px 12px;border-radius:12px;border:1px solid ${active?'var(--orange)':'var(--g300)'};background:${active?'var(--orange)':'#fff'};color:${active?'#fff':'var(--g700)'};font-size:12px;font-weight:600;cursor:pointer;">${p.label}</button>`;}).join('')}
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;margin-left:auto;flex-wrap:wrap;">
+      <label style="font-size:12px;color:var(--g700);font-weight:600;">From</label>
+      <select class="month-sel" onchange="trendFrom=this.value;renderTrend()">
+        ${allWks.map(w=>`<option value="${w}" ${w===trendFrom?'selected':''}>${fmtWeekLabel(w)}</option>`).join('')}
+      </select>
+      <label style="font-size:12px;color:var(--g700);font-weight:600;">To</label>
+      <select class="month-sel" onchange="trendTo=this.value;renderTrend()">
+        ${allWks.map(w=>`<option value="${w}" ${w===trendTo?'selected':''}>${fmtWeekLabel(w)}</option>`).join('')}
+      </select>
+      <span style="font-size:11px;color:var(--g500)">${weeks.length} weeks</span>
+    </div>
+  </div>`;
+  $('content').innerHTML=`${rangeBar}
     <div class="chart-row single"><div class="chart-card"><h3>Blended ROAS — Weekly (Mon–Sun)</h3><div class="chart-wrap tall"><canvas id="cv-t-roas"></canvas></div></div></div>
     <div class="chart-row">
       <div class="chart-card"><h3>Spend vs. Sales — Weekly</h3><div class="chart-wrap"><canvas id="cv-t-ss"></canvas></div></div>
@@ -597,6 +622,7 @@ function renderICIP(){
   },50);
 }
 function sortICIP(key){if(icipSortKey===key)icipSortDir*=-1;else{icipSortKey=key;icipSortDir=-1;}renderICIP();}
+function setTrendPreset(n){const allWks=allWeekKeys().filter(w=>{const d=getWeekData(w);return d?.campaigns?.length>0;});trendTo=allWks[allWks.length-1];trendFrom=allWks[Math.max(0,allWks.length-n)];renderTrend();}
 
 /* ---- INIT ---- */
 populateWeekSelector();
