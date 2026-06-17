@@ -3,260 +3,694 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Petit Pot — Marketing Scorecard</title>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.js"></script>
+<title>Petit Pot — Instacart Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.js" integrity="sha384-iU8HYtnGQ8Cy4zl7gbNMOhsDTTKX02BTXptVP/vqAWIaTfM7isw76iyZCsjL2eVi" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
-  :root{color-scheme:light;--bg:#fff;--surface:#fff;--border:#dde8f5;--text:#1a1a1a;--muted:#6b7280;
-    --accent:#fd5000;--green:#1e7a3d;--red:#c62828;--header-bg:#1b69b3;--soft:#f4f8fd;}
-  *{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:13px}
-  .header{background:var(--header-bg);color:#f0ebe0;padding:14px 24px;display:flex;align-items:center;justify-content:space-between}
-  .header h1{font-size:17px;font-weight:600}
-  .header .meta{font-size:12px;color:#c0b89a}
-  .tabs{background:var(--surface);border-bottom:1px solid var(--border);display:flex;padding:0 24px;overflow-x:auto}
-  .tab{padding:11px 18px;cursor:pointer;font-size:12.5px;font-weight:500;color:var(--muted);border-bottom:3px solid transparent;white-space:nowrap}
-  .tab:hover{color:var(--text)}
-  .tab.active{color:var(--accent);border-bottom-color:var(--accent)}
-  .content{padding:20px 24px;max-width:1180px}
-  .panel{display:none}.panel.active{display:block}
-  .note{font-size:11.5px;color:var(--muted);background:#fff7f0;border:1px solid #ffd9bf;border-radius:6px;padding:7px 11px;margin-bottom:14px}
-  .kpi-row{display:flex;gap:12px;margin-bottom:18px;flex-wrap:wrap}
-  .kpi{background:var(--soft);border:1px solid #cfe0f2;border-radius:8px;padding:12px 16px;min-width:150px;flex:1}
-  .kpi .lbl{font-size:11px;color:var(--muted);font-weight:500;margin-bottom:4px;text-transform:uppercase;letter-spacing:.03em}
-  .kpi .val{font-size:21px;font-weight:700}
-  .kpi .chg{font-size:11px;margin-top:3px}
-  .pos{color:var(--green)}.neg{color:var(--red)}
-  .section-hd{display:flex;align-items:center;justify-content:space-between;margin:18px 0 10px}
-  .section-hd h2{font-size:14px;font-weight:600}
-  .badge{background:#ffecda;color:var(--accent);border-radius:20px;padding:2px 10px;font-size:11px;font-weight:600}
-  .tbl-wrap{overflow-x:auto;border-radius:8px;border:1px solid var(--border);display:inline-block;max-width:100%}
-  table{border-collapse:collapse;font-size:12.5px;width:auto}
-  thead th{background:#ffecda;padding:9px 13px;text-align:right;font-weight:600;font-size:11.5px;border-bottom:1px solid var(--border);white-space:nowrap;min-width:84px}
-  thead th.left,td.left{text-align:left;min-width:120px}
-  tbody tr:nth-child(even){background:#f8fbff}
-  tbody tr:hover{background:#ffecda}
-  td{padding:7px 13px;text-align:right;border-bottom:1px solid #f0ece6;white-space:nowrap}
-  .grp td{background:#eef4fb!important;font-weight:700;color:#1b69b3;font-size:11px;text-transform:uppercase;letter-spacing:.04em;padding:6px 13px}
-  .chart-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:8px}
-  .chart-box{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px}
-  .chart-box h3{font-size:12px;font-weight:600;color:var(--muted);margin-bottom:12px}
-  .chart-box canvas{max-height:240px}
-  @media(max-width:760px){.chart-row{grid-template-columns:1fr}.kpi-row{flex-direction:column}}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{--orange:#fd5000;--blue:#1b69b3;--green:#43B02A;--g100:#f5f5f5;--g200:#eeeeee;--g300:#e0e0e0;--g500:#9e9e9e;--g700:#616161;--g900:#212121;}
+body{font-family:Arial,sans-serif;font-size:14px;background:#f4f4f4;color:var(--g900);}
+.hdr{background:var(--blue);color:#fff;padding:11px 20px;display:flex;align-items:center;gap:14px;}
+.hdr-logo{width:34px;height:34px;background:var(--orange);border-radius:6px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:13px;flex-shrink:0;}
+.hdr-title{font-size:17px;font-weight:700;}.hdr-sub{font-size:12px;opacity:.7;margin-top:1px;}
+.hdr-right{margin-left:auto;display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.week-pill{display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.3);border-radius:20px;padding:5px 12px;font-size:12px;font-weight:600;}
+.week-pill select{background:transparent;border:none;color:#fff;font-size:12px;font-weight:600;cursor:pointer;outline:none;}
+.week-pill select option{background:#1b69b3;}
+.upload-btn{display:flex;align-items:center;gap:6px;background:var(--orange);border:none;color:#fff;padding:7px 14px;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;}
+.upload-btn:hover{opacity:.9;}.upload-btn input{display:none;}
+.tab-bar{background:#fff;border-bottom:2px solid var(--g200);display:flex;padding:0 20px;overflow-x:auto;}
+.tab{padding:12px 16px;font-size:13px;font-weight:600;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;color:var(--g700);white-space:nowrap;transition:color .15s,border-color .15s;}
+.tab:hover{color:var(--blue);}.tab.active{color:var(--orange);border-bottom-color:var(--orange);}
+.content{padding:18px 20px;}
+.kpi-strip{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:18px;}
+.kpi-strip-4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px;}
+.kpi{background:#fff;border:1px solid var(--g300);border-radius:6px;padding:13px 16px;}
+.kpi .lbl{font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:var(--g500);margin-bottom:4px;}
+.kpi .val{font-size:22px;font-weight:700;color:var(--g900);}
+.kpi .val.ora{color:var(--orange);}.kpi .val.grn{color:#2e7d32;}.kpi .val.blu{color:var(--blue);}
+.kpi .sub{font-size:11px;color:var(--g500);margin-top:3px;}
+.chg{font-size:11px;margin-top:3px;}.up{color:#2e7d32;}.dn{color:#c62828;}.neu{color:var(--g500);}
+.chart-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:18px;}
+.chart-row.single{grid-template-columns:1fr;}.chart-row.thirds{grid-template-columns:2fr 1fr;}
+.chart-card{background:#fff;border:1px solid var(--g300);border-radius:6px;padding:16px;}
+.chart-card h3{font-size:13px;font-weight:700;color:var(--g700);margin-bottom:12px;}
+.chart-wrap{position:relative;height:210px;}.chart-wrap.tall{height:290px;}.chart-wrap.xtall{height:320px;}
+.tbl-card{background:#fff;border:1px solid var(--g300);border-radius:6px;margin-bottom:18px;overflow:hidden;}
+.tbl-hdr{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--g200);flex-wrap:wrap;gap:8px;}
+.tbl-hdr h3{font-size:13px;font-weight:700;color:var(--g700);}
+.tbl-wrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+thead tr{background:var(--g100);}
+th{padding:9px 12px;text-align:right;font-size:11px;text-transform:uppercase;letter-spacing:.3px;color:var(--g500);font-weight:600;white-space:nowrap;cursor:pointer;user-select:none;}
+th.L{text-align:left;}th.nosort{cursor:default;}th:hover:not(.nosort){color:var(--blue);}
+td{padding:9px 12px;text-align:right;border-top:1px solid var(--g200);}td.L{text-align:left;}
+tr:hover td{background:#fafafa;}
+.pill{display:inline-block;padding:2px 9px;border-radius:10px;font-weight:700;font-size:12px;}
+.rh{background:#e8f5e9;color:#1b5e20;}.rm{background:#fff9c4;color:#827717;}.rl{background:#ffebee;color:#b71c1c;}
+.status-dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:5px;}
+.size-badge{display:inline-block;background:var(--g100);border:1px solid var(--g300);border-radius:4px;padding:1px 6px;font-size:11px;color:var(--g700);margin-left:4px;}
+.ntb-bar-wrap{width:100%;background:var(--g200);border-radius:3px;height:5px;margin-top:3px;}
+.ntb-bar{height:5px;border-radius:3px;background:var(--green);}
+.weeks-loaded{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;}
+.wk-badge{background:var(--g100);border:1px solid var(--g300);border-radius:12px;padding:3px 10px;font-size:11px;font-weight:600;color:var(--g700);cursor:pointer;}
+.wk-badge.cur{background:var(--blue);color:#fff;border-color:var(--blue);}
+.empty-state{padding:40px;text-align:center;color:var(--g500);font-size:13px;}
+.notice{background:#fff9e6;border:1px solid #ffe082;border-radius:6px;padding:10px 14px;font-size:12px;color:#6d4c00;margin-bottom:14px;}
+.icip-note{background:#e8f4ff;border:1px solid #b3d4f5;border-radius:6px;padding:9px 14px;font-size:12px;color:#0d4a8a;margin-bottom:14px;}
+.month-sel{border:1px solid var(--g300);border-radius:6px;padding:5px 10px;font-size:13px;font-weight:600;color:var(--g900);background:#fff;cursor:pointer;}
+.section-sep{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--g500);margin:18px 0 10px;padding-top:14px;border-top:1px solid var(--g200);}
+.yr-2024{color:#9e9e9e;}.yr-2025{color:var(--blue);}.yr-2026{color:var(--orange);}
 </style>
 </head>
 <body>
-<div class="header">
-  <h1>Petit Pot — Marketing Scorecard</h1>
-  <span class="meta">MOCK DATA · weekly by channel</span>
+<div class="hdr">
+  <div class="hdr-logo">PP</div>
+  <div><div class="hdr-title">Instacart Dashboard</div><div class="hdr-sub">Petit Pot — Ads + Total Platform</div></div>
+  <div class="hdr-right">
+    <div class="week-pill" id="weekPillWrap">
+      Week ending:&nbsp;<select id="weekSel" onchange="render()"><option value="">--</option></select>
+    </div>
+    <label class="upload-btn" title="Upload Ads CSV or Monthly Tracker .xlsx">
+      + Upload Report
+      <input type="file" id="csvUpload" accept=".csv,.xlsx" onchange="handleUpload(this)">
+    </label>
+  </div>
 </div>
-<div class="tabs">
-  <div class="tab active" onclick="showTab('overview')">Overview</div>
-  <div class="tab" onclick="showTab('instacart')">Instacart</div>
-  <div class="tab" onclick="showTab('amazon')">Amazon</div>
-  <div class="tab" onclick="showTab('meta')">Meta / Facebook</div>
+<div class="tab-bar">
+  <div class="tab active" data-tab="summary"   onclick="setTab('summary',this)">Summary</div>
+  <div class="tab"        data-tab="campaigns" onclick="setTab('campaigns',this)">Campaigns</div>
+  <div class="tab"        data-tab="products"  onclick="setTab('products',this)">By Product</div>
+  <div class="tab"        data-tab="trend"     onclick="setTab('trend',this)">Trend</div>
+  <div class="tab"        data-tab="icip"      onclick="setTab('icip',this)">ICIP / Total Sales</div>
 </div>
-<div class="content">
-  <div class="note">&#9888; This is a <b>mockup with placeholder numbers</b>. Replace the data in the <code>DATA</code> block near the top of this file each week &mdash; see the README for steps.</div>
-  <div class="panel active" id="panel-overview"></div>
-  <div class="panel" id="panel-instacart"></div>
-  <div class="panel" id="panel-amazon"></div>
-  <div class="panel" id="panel-meta"></div>
-</div>
-
+<div class="content" id="content"></div>
 <script>
-/* =====================================================================
-   WEEKLY DATA  —  EDIT THIS EACH WEEK, THEN SAVE & UPLOAD TO GITHUB
-   ---------------------------------------------------------------------
-   - One line per week, inside each channel (instacart / amazon / meta).
-   - To add a week: copy the LAST { ... } line in a channel, paste it
-     below that line, then change the date + 6 numbers.
-   - Enter only the 6 raw numbers from each ad portal:
-       wk     = week-ending date "YYYY-MM-DD"
-       spend  = ad spend ($)
-       sales  = attributed sales / conversion value ($)
-       impr   = impressions
-       clicks = clicks
-       orders = orders / purchases
-       units  = units sold
-   - Everything else (ROAS, CTR, CPC, conv rate, $/unit) is calculated
-     for you. Keep the commas and curly braces exactly as shown.
-   ===================================================================== */
-const DATA = {
-  "instacart": [
-    { "wk": "2026-04-26", "spend": 1768, "sales": 6718, "impr": 166623, "clicks": 4344, "orders": 447, "units": 799 },
-    { "wk": "2026-05-03", "spend": 1807, "sales": 7788, "impr": 163915, "clicks": 4386, "orders": 492, "units": 925 },
-    { "wk": "2026-05-10", "spend": 1976, "sales": 8200, "impr": 185393, "clicks": 5587, "orders": 570, "units": 1063 },
-    { "wk": "2026-05-17", "spend": 1938, "sales": 7674, "impr": 176250, "clicks": 4633, "orders": 494, "units": 917 },
-    { "wk": "2026-05-24", "spend": 2113, "sales": 8220, "impr": 202701, "clicks": 5802, "orders": 625, "units": 1130 },
-    { "wk": "2026-05-31", "spend": 2161, "sales": 8233, "impr": 194446, "clicks": 5188, "orders": 587, "units": 1049 },
-    { "wk": "2026-06-07", "spend": 2177, "sales": 8664, "impr": 208938, "clicks": 5806, "orders": 618, "units": 1145 },
-    { "wk": "2026-06-14", "spend": 2370, "sales": 10025, "impr": 218236, "clicks": 6183, "orders": 683, "units": 1276 }
-  ],
-  "amazon": [
-    { "wk": "2026-04-26", "spend": 4706, "sales": 14824, "impr": 888184, "clicks": 3703, "orders": 337, "units": 594 },
-    { "wk": "2026-05-03", "spend": 4638, "sales": 15305, "impr": 878138, "clicks": 3566, "orders": 325, "units": 550 },
-    { "wk": "2026-05-10", "spend": 5114, "sales": 18308, "impr": 996575, "clicks": 3970, "orders": 367, "units": 596 },
-    { "wk": "2026-05-17", "spend": 4835, "sales": 16971, "impr": 910267, "clicks": 3928, "orders": 372, "units": 619 },
-    { "wk": "2026-05-24", "spend": 5135, "sales": 17151, "impr": 969201, "clicks": 3581, "orders": 320, "units": 526 },
-    { "wk": "2026-05-31", "spend": 5470, "sales": 17449, "impr": 958392, "clicks": 3998, "orders": 338, "units": 560 },
-    { "wk": "2026-06-07", "spend": 5301, "sales": 17705, "impr": 1024395, "clicks": 3823, "orders": 341, "units": 583 },
-    { "wk": "2026-06-14", "spend": 5651, "sales": 20400, "impr": 1085489, "clicks": 4595, "orders": 399, "units": 673 }
-  ],
-  "meta": [
-    { "wk": "2026-04-26", "spend": 2859, "sales": 7262, "impr": 694401, "clicks": 6393, "orders": 284, "units": 448 },
-    { "wk": "2026-05-03", "spend": 3117, "sales": 7886, "impr": 821619, "clicks": 8467, "orders": 382, "units": 618 },
-    { "wk": "2026-05-10", "spend": 3249, "sales": 8350, "impr": 768778, "clicks": 8179, "orders": 385, "units": 639 },
-    { "wk": "2026-05-17", "spend": 3103, "sales": 8130, "impr": 765732, "clicks": 7534, "orders": 318, "units": 516 },
-    { "wk": "2026-05-24", "spend": 3220, "sales": 7470, "impr": 763206, "clicks": 7276, "orders": 310, "units": 488 },
-    { "wk": "2026-05-31", "spend": 3352, "sales": 7777, "impr": 787743, "clicks": 7438, "orders": 313, "units": 494 },
-    { "wk": "2026-06-07", "spend": 3470, "sales": 8016, "impr": 906468, "clicks": 9230, "orders": 392, "units": 612 },
-    { "wk": "2026-06-14", "spend": 3684, "sales": 8989, "impr": 905987, "clicks": 8513, "orders": 404, "units": 678 }
-  ]
-};
-/* ===================  END OF WEEKLY DATA  =========================== */
+/* ============================================================
+   HOW TO UPDATE THIS DASHBOARD
+   ============================================================
+   ADS REPORTS (weekly from Instacart Ads Manager):
+   1. allcampaigns_aggregated_linear_YYYYMMDD-YYYYMMDD.csv
+   2. allproduct_aggregated_linear_YYYYMMDD-YYYYMMDD.csv
 
-const CH = {instacart:{name:"Instacart",color:"#ff7a00"},
-            amazon:{name:"Amazon",color:"#1b69b3"},
-            meta:{name:"Meta / Facebook",color:"#6abc4b"}};
-const ORDER = ["instacart","amazon","meta"];
+   ICIP/TRACKER (monthly — upload to refresh ICIP tab):
+   3. "Monthly Instacart Tracker" .xlsx file
+      (sheets: "Summary ", "Campaign ", "UPC")
+   ============================================================ */
 
-const nf=(v,d=0)=>(+v).toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d});
-const usd=(v,d=0)=>'$'+nf(v,d);
-const pct=(v)=>nf(v,1)+'%';
-const fwk=w=>{const p=w.split('-');return (+p[1])+'/'+(+p[2]);};
+/* ---- ADS SEED DATA (week ending 2026-06-14) ---- */
+const SEED_CAMPAIGNS={weekEnd:"2026-06-14",campaigns:[
+  {campaign:"Glass 2ct",           status:"active",spend:1255.98,sales:8070.56,units:1211.59,impr:95806, clicks:2584,ntb_sales:2574.17,ntb_pct:0.319},
+  {campaign:"Protein Launch",      status:"active",spend:3050.24,sales:3932.26,units:440.83, impr:117750,clicks:1404,ntb_sales:2827.12,ntb_pct:0.719},
+  {campaign:"2ct Paper Cup Campaign",status:"active",spend:1062.74,sales:2968.02,units:691.83,impr:52082, clicks:1336,ntb_sales:1422.28,ntb_pct:0.479},
+  {campaign:"SP_Costco_6ct_Glass", status:"active",spend:1411.32,sales:3183.93,units:269.50, impr:51079, clicks:760, ntb_sales:1911.55,ntb_pct:0.600},
+  {campaign:"Pints",               status:"active",spend:86.04,  sales:514.99, units:55.40,  impr:3285,  clicks:94,  ntb_sales:99.09,  ntb_pct:0.192},
+]};
+const SEED_PRODUCTS={weekEnd:"2026-06-14",products:[
+  {product:"Extra Creamy Chocolate Pudding",   size:"3.5 oz",campaign:"2ct Paper Cup Campaign",adGroup:"Paper Cups",            status:"active",spend:640.55, sales:1828.88,units:426.17,impr:33268,clicks:821,ntb_sales:906.52, ntb_pct:0.496},
+  {product:"Extra Creamy Vanilla Pudding",     size:"3.5 oz",campaign:"2ct Paper Cup Campaign",adGroup:"Paper Cups",            status:"active",spend:364.47, sales:969.90, units:228.00,impr:16093,clicks:437,ntb_sales:447.52, ntb_pct:0.461},
+  {product:"Extra Creamy Rice Pudding",        size:"3.5 oz",campaign:"2ct Paper Cup Campaign",adGroup:"Paper Cups",            status:"active",spend:57.72,  sales:169.25, units:37.67, impr:2721, clicks:78, ntb_sales:68.25,  ntb_pct:0.403},
+  {product:"Vanilla Bean Organic Pot de Crème",size:"4 oz",  campaign:"Glass 2ct",             adGroup:"Dairy Pot de creme 2pks",status:"active",spend:698.54, sales:4663.52,units:718.03,impr:52992,clicks:1401,ntb_sales:1473.54,ntb_pct:0.316},
+  {product:"Oatmilk Chocolate Pot de Crème",   size:"4 oz",  campaign:"Glass 2ct",             adGroup:"Dairy Pot de creme 2pks",status:"active",spend:185.81, sales:1094.63,units:154.45,impr:14199,clicks:400,ntb_sales:408.95, ntb_pct:0.374},
+  {product:"Pistachio Organic Pot de Crème",   size:"4 oz",  campaign:"Glass 2ct",             adGroup:"Dairy Pot de creme 2pks",status:"active",spend:128.67, sales:571.81, units:87.67, impr:14564,clicks:346,ntb_sales:244.32, ntb_pct:0.427},
+  {product:"Vanilla Rice Pudding Organic",     size:"4 oz",  campaign:"Glass 2ct",             adGroup:"Rice pudding 2pk + pint",status:"active",spend:224.65, sales:1560.31,units:226.61,impr:12745,clicks:394,ntb_sales:373.58, ntb_pct:0.239},
+  {product:"Plant-Based Vanilla Rice Pudding", size:"4 oz",  campaign:"Glass 2ct",             adGroup:"Rice pudding 2pk + pint",status:"active",spend:18.31,  sales:180.28, units:24.83, impr:1306, clicks:43, ntb_sales:73.78,  ntb_pct:0.409},
+  {product:"Extra Creamy Chocolate Pudding 8g Protein",size:"14 oz",campaign:"Protein Launch", adGroup:"8g Protein 4ct",        status:"active",spend:2255.98,sales:2937.29,units:327.83,impr:79756,clicks:966,ntb_sales:2166.42,ntb_pct:0.738},
+  {product:"Extra Creamy Strawberry Pudding 8g Protein",size:"14 oz",campaign:"Protein Launch",adGroup:"8g Protein 4ct",        status:"active",spend:794.26, sales:994.97, units:113.00,impr:37994,clicks:438,ntb_sales:660.69, ntb_pct:0.664},
+  {product:"Extra Creamy Tapioca Pudding",     size:"14 oz", campaign:"Pints",                 adGroup:"Tapioca",               status:"active",spend:56.04,  sales:334.48, units:35.90, impr:1657, clicks:50, ntb_sales:51.54,  ntb_pct:0.154},
+  {product:"Dark Chocolate Pint Organic",      size:"14 oz", campaign:"Pints",                 adGroup:"Chocolate",             status:"active",spend:7.37,   sales:11.79,  units:1.00,  impr:274,  clicks:6,  ntb_sales:0,      ntb_pct:0},
+  {product:"Extra Creamy Rice Pudding",        size:"14 oz", campaign:"Pints",                 adGroup:"Rice Pudding",          status:"active",spend:16.43,  sales:143.04, units:16.00, impr:845,  clicks:29, ntb_sales:36.56,  ntb_pct:0.256},
+  {product:"Rice Pudding Pint Organic",        size:"14 oz", campaign:"Pints",                 adGroup:"Rice Pudding",          status:"active",spend:1.87,   sales:20.88,  units:2.00,  impr:308,  clicks:4,  ntb_sales:10.99,  ntb_pct:0.526},
+  {product:"Tapioca Pudding 6ct Organic",      size:"24 oz", campaign:"SP_Costco_6ct_Glass",   adGroup:"Tapioca 6ct Glass",     status:"active",spend:1411.32,sales:3183.93,units:269.50,impr:51079,clicks:760,ntb_sales:1911.55,ntb_pct:0.600},
+]};
 
-function derive(r){
-  return {...r,
-    roas: r.spend? r.sales/r.spend : 0,
-    ctr:  r.impr?  r.clicks/r.impr*100 : 0,
-    cpc:  r.clicks? r.spend/r.clicks : 0,
-    cvr:  r.clicks? r.orders/r.clicks*100 : 0,
-    ppu:  r.units? r.sales/r.units : 0,
-  };
+/* ---- ICIP TRACKER DATA (from Monthly Instacart Tracker.xlsx) ---- */
+const TRACKER_SUMMARY={"2026-01":{"month":"2026-01","year":2026,"deliveries":14869.0,"sales":116513.0,"units":19396.0,"sp_spend":14677.81,"attr_units":11885.0,"org_units":7511,"arp":6.0071},"2026-02":{"month":"2026-02","year":2026,"deliveries":18430.0,"sales":122381.0,"units":23782.0,"sp_spend":17878.34,"attr_units":13798.0,"org_units":9984,"arp":5.146},"2026-03":{"month":"2026-03","year":2026,"deliveries":21062.0,"sales":167941.0,"units":30373.0,"sp_spend":36413.0,"attr_units":20430.0,"org_units":9943,"arp":5.5293},"2026-04":{"month":"2026-04","year":2026,"deliveries":15469.0,"sales":151224.0,"units":23507.0,"sp_spend":28619.0,"attr_units":16246.0,"org_units":7261,"arp":6.4331},"2026-05":{"month":"2026-05","year":2026,"deliveries":null,"sales":147869.0,"units":23428.0,"sp_spend":27272.0,"attr_units":16440.0,"org_units":6988,"arp":6.3116},"2025-01":{"month":"2025-01","year":2025,"deliveries":14869.0,"sales":109452.0,"units":19564.0,"sp_spend":15656.0,"attr_units":10762,"org_units":8802,"arp":5.5946},"2025-02":{"month":"2025-02","year":2025,"deliveries":18430.0,"sales":129829.0,"units":23442.0,"sp_spend":27371.0,"attr_units":15930,"org_units":7512,"arp":5.5383},"2025-03":{"month":"2025-03","year":2025,"deliveries":21062.0,"sales":144029.0,"units":29939.0,"sp_spend":28138.0,"attr_units":20533,"org_units":9406,"arp":4.8107},"2025-04":{"month":"2025-04","year":2025,"deliveries":15469.0,"sales":115680.0,"units":21151.0,"sp_spend":16950.0,"attr_units":16158,"org_units":4993,"arp":5.4692},"2025-05":{"month":"2025-05","year":2025,"deliveries":null,"sales":122378.0,"units":22136.0,"sp_spend":19487.0,"attr_units":16204.0,"org_units":5932,"arp":5.5285},"2025-06":{"month":"2025-06","year":2025,"deliveries":null,"sales":136102.0,"units":22253.0,"sp_spend":25450.0,"attr_units":17109.0,"org_units":5144,"arp":6.1161},"2025-07":{"month":"2025-07","year":2025,"deliveries":null,"sales":135204.0,"units":26237.0,"sp_spend":26080.0,"attr_units":20941.0,"org_units":5296,"arp":5.1532},"2025-08":{"month":"2025-08","year":2025,"deliveries":null,"sales":135647.0,"units":21395.0,"sp_spend":28036.6,"attr_units":16176.0,"org_units":5219,"arp":6.3401},"2025-09":{"month":"2025-09","year":2025,"deliveries":null,"sales":121504.0,"units":21811.0,"sp_spend":23432.65,"attr_units":16542.0,"org_units":5269,"arp":5.5708},"2025-10":{"month":"2025-10","year":2025,"deliveries":null,"sales":112331.0,"units":19342.0,"sp_spend":19320.26,"attr_units":14661.0,"org_units":4681,"arp":5.8076},"2025-11":{"month":"2025-11","year":2025,"deliveries":null,"sales":104350.0,"units":18644.0,"sp_spend":14501.0,"attr_units":12635.0,"org_units":6009,"arp":5.597},"2025-12":{"month":"2025-12","year":2025,"deliveries":null,"sales":102737.0,"units":17024.0,"sp_spend":15080.53,"attr_units":11396.28,"org_units":5627.72,"arp":6.0348},"2024-01":{"month":"2024-01","year":2024,"deliveries":6165.555556,"sales":44134.34,"units":8888.023952,"sp_spend":null,"attr_units":null,"org_units":null,"arp":null},"2024-02":{"month":"2024-02","year":2024,"deliveries":6097.285068,"sales":43238.97,"units":8234.210526,"sp_spend":null,"attr_units":null,"org_units":null,"arp":null},"2024-03":{"month":"2024-03","year":2024,"deliveries":10195.27559,"sales":71585.93,"units":13554.03226,"sp_spend":null,"attr_units":null,"org_units":null,"arp":null},"2024-04":{"month":"2024-04","year":2024,"deliveries":10385.91549,"sales":68578.67,"units":14575.57252,"sp_spend":null,"attr_units":null,"org_units":null,"arp":null},"2024-05":{"month":"2024-05","year":2024,"deliveries":9620.467836,"sales":63781.82,"units":13742.10526,"sp_spend":null,"attr_units":null,"org_units":null,"arp":null},"2024-06":{"month":"2024-06","year":2024,"deliveries":7580.630631,"sales":51716.1,"units":10819.90291,"sp_spend":null,"attr_units":null,"org_units":null,"arp":null},"2024-07":{"month":"2024-07","year":2024,"deliveries":6849.537037,"sales":53702.8,"units":9860.784314,"sp_spend":null,"attr_units":null,"org_units":null,"arp":null},"2024-08":{"month":"2024-08","year":2024,"deliveries":8966.666667,"sales":71385.03,"units":12376.77725,"sp_spend":null,"attr_units":null,"org_units":null,"arp":null},"2024-09":{"month":"2024-09","year":2024,"deliveries":7527.542373,"sales":59880.28,"units":10708.07175,"sp_spend":null,"attr_units":null,"org_units":null,"arp":null},"2024-10":{"month":"2024-10","year":2024,"deliveries":5211.271676,"sales":40854.03,"units":7361.403509,"sp_spend":null,"attr_units":null,"org_units":null,"arp":null},"2024-11":{"month":"2024-11","year":2024,"deliveries":5219.54023,"sales":40198.4,"units":7346.987952,"sp_spend":null,"attr_units":null,"org_units":null,"arp":null},"2024-12":{"month":"2024-12","year":2024,"deliveries":6187.058824,"sales":50687.58,"units":8463.218391,"sp_spend":null,"attr_units":null,"org_units":null,"arp":null}};
+const TRACKER_CAMPAIGNS={"Paper cups":{"01":{"spend":11592.78,"sales":38219.46,"units":9223.4,"impr":1218444,"clicks":19154,"ntb_sales":14701.3,"ntb_pct":0.385},"02":{"spend":9800.69,"sales":30193.2,"units":7296.9,"impr":981322,"clicks":15663,"ntb_sales":11077.76,"ntb_pct":0.367},"03":{"spend":14259.65,"sales":41700.79,"units":13216.0,"impr":1419079,"clicks":27892,"ntb_sales":16556.02,"ntb_pct":0.397},"04":{"spend":8480.52,"sales":34709.68,"units":8632.4,"impr":1013953,"clicks":16747,"ntb_sales":10891.57,"ntb_pct":0.314},"05":{"spend":8452.17,"sales":33350.98,"units":8277.3,"impr":987731,"clicks":16270,"ntb_sales":10909.15,"ntb_pct":0.327},"06":{"spend":7858.69,"sales":32246.45,"units":8001.7,"impr":913385,"clicks":15675,"ntb_sales":10914.38,"ntb_pct":0.338},"07":{"spend":9850.63,"sales":36719.85,"units":12058.0,"impr":1144808,"clicks":23261,"ntb_sales":14932.85,"ntb_pct":0.407},"08":{"spend":6602.17,"sales":27834.66,"units":6599.7,"impr":833443,"clicks":12808,"ntb_sales":8768.35,"ntb_pct":0.315},"09":{"spend":9571.41,"sales":31898.81,"units":8514.3,"impr":760202,"clicks":14749,"ntb_sales":9391.65,"ntb_pct":0.294},"10":{"spend":8183.98,"sales":28409.88,"units":6842.0,"impr":797771,"clicks":12856,"ntb_sales":9283.86,"ntb_pct":0.327},"11":{"spend":6062.04,"sales":20574.37,"units":5361.9,"impr":513253,"clicks":8861,"ntb_sales":7438.47,"ntb_pct":0.362}},"2ct Glass":{"02":{"spend":4149.96,"sales":29490.7,"units":5303.6,"impr":301665,"clicks":8232,"ntb_sales":10739.18,"ntb_pct":0.364},"03":{"spend":4547.11,"sales":34110.55,"units":5116.2,"impr":298408,"clicks":7864,"ntb_sales":12237.59,"ntb_pct":0.359},"04":{"spend":5838.81,"sales":43197.86,"units":6584.6,"impr":402786,"clicks":10780,"ntb_sales":15825.54,"ntb_pct":0.366},"05":{"spend":6077.62,"sales":45565.34,"units":7003.5,"impr":413767,"clicks":11299,"ntb_sales":16524.63,"ntb_pct":0.363},"06":{"spend":6071.0,"sales":43955.5,"units":6528.2,"impr":430106,"clicks":11847,"ntb_sales":16547.07,"ntb_pct":0.376},"07":{"spend":6021.86,"sales":45659.24,"units":6669.5,"impr":456089,"clicks":11907,"ntb_sales":16897.84,"ntb_pct":0.37},"08":{"spend":6029.76,"sales":46801.21,"units":7081.5,"impr":489508,"clicks":12619,"ntb_sales":16557.24,"ntb_pct":0.354},"09":{"spend":6069.54,"sales":45046.84,"units":6789.6,"impr":394772,"clicks":11410,"ntb_sales":15559.23,"ntb_pct":0.345},"10":{"spend":7613.51,"sales":50381.42,"units":7280.7,"impr":478641,"clicks":12357,"ntb_sales":19083.95,"ntb_pct":0.379},"11":{"spend":5221.92,"sales":38565.85,"units":6022.8,"impr":386305,"clicks":11181,"ntb_sales":14475.38,"ntb_pct":0.375}}};
+const TRACKER_PRODUCTS=[{"month":"2025-01","product":"Rice Pudding, Organic French Dessert","size":"each","sales":3222.76,"units":271.0,"deliveries":289.0},{"month":"2025-01","product":"Pistachio, Organic French Dessert","size":"2 x 3.5 oz","sales":1638.52,"units":287.0,"deliveries":257.0},{"month":"2025-01","product":"Creme Brulee, Creamy French Dessert","size":"2 x 3.5 oz","sales":1666.42,"units":248.0,"deliveries":207.0},{"month":"2025-01","product":"Dark Chocolate, Organic French Dessert","size":"6 x 4 oz","sales":33.53,"units":3.0,"deliveries":3.0},{"month":"2025-01","product":"Rice Pudding, Organic French Dessert","size":"each","sales":6888.34,"units":605.0,"deliveries":587.0},{"month":"2025-01","product":"Pistachio, Organic French Dessert","size":"each","sales":5967.39,"units":532.0,"deliveries":625.0},{"month":"2025-01","product":"Dark Chocolate, Creamy French Dessert","size":"2 x 3.5 oz","sales":18890.24,"units":4550.0,"deliveries":3936.0},{"month":"2025-01","product":"Dark Chocolate Pint, Organic French Dessert","size":"14 oz","sales":157.33,"units":17.0,"deliveries":15.0},{"month":"2025-01","product":"Rice Pudding Pint, Organic French Dessert","size":"14 oz","sales":9544.83,"units":1064.0,"deliveries":940.0},{"month":"2025-01","product":"Vanilla Bean, Creamy French Dessert","size":"2 x 3.5 oz","sales":15277.27,"units":3679.0,"deliveries":2995.0},{"month":"2025-01","product":"Plant-Based Vanilla Rice Pudding, Organic Plant Based Dessert","size":"2 x 4 oz","sales":560.27,"units":95.0,"deliveries":88.0},{"month":"2025-01","product":"Dark Chocolate, Organic French Dessert","size":"8 oz","sales":3463.39,"units":582.0,"deliveries":489.0},{"month":"2025-01","product":"Dark Chocolate, Organic French Dessert","size":"2 x 4 oz","sales":16415.68,"units":2949.0,"deliveries":2523.0},{"month":"2025-01","product":"Vanilla Bean, Organic French Dessert","size":"8 oz","sales":1489.1,"units":250.0,"deliveries":205.0},{"month":"2025-01","product":"Vanilla Bean, Organic French Dessert","size":"2 x 4 oz","sales":12727.77,"units":2290.0,"deliveries":1846.0},{"month":"2025-01","product":"Plant-Based Oatmilk Chocolate, Organic French Dessert","size":"2 x 4 oz","sales":2553.82,"units":442.0,"deliveries":371.0},{"month":"2025-01","product":"Vanilla Rice Pudding, Organic French Dessert","size":"2 x 4 oz","sales":4983.0,"units":816.0,"deliveries":702.0},{"month":"2025-01","product":"Organic Dark Chocolate French Pudding","size":"2 x 3.5 oz","sales":7.19,"units":1.0,"deliveries":1.0},{"month":"2025-02","product":"Rice Pudding, Organic French Dessert","size":"each","sales":3971.6,"units":335.0,"deliveries":319.0},{"month":"2025-03","product":"Rice Pudding, Organic French Dessert","size":"each","sales":5227.81,"units":441.0,"deliveries":429.0},{"month":"2025-02","product":"Pistachio, Organic French Dessert","size":"2 x 3.5 oz","sales":1890.52,"units":327.0,"deliveries":276.0},{"month":"2025-03","product":"Pistachio, Organic French Dessert","size":"2 x 3.5 oz","sales":2350.47,"units":409.0,"deliveries":331.0},{"month":"2025-02","product":"Creme Brulee, Creamy French Dessert","size":"2 x 3.5 oz","sales":1559.24,"units":246.0,"deliveries":200.0},{"month":"2025-03","product":"Creme Brulee, Creamy French Dessert","size":"2 x 3.5 oz","sales":2136.6,"units":344.0,"deliveries":278.0},{"month":"2025-02","product":"Dark Chocolate, Organic French Dessert","size":"6 x 4 oz","sales":112.28,"units":10.0,"deliveries":13.0},{"month":"2025-03","product":"Dark Chocolate, Organic French Dessert","size":"6 x 4 oz","sales":92.69,"units":8.0,"deliveries":9.0},{"month":"2025-02","product":"Rice Pudding, Organic French Dessert","size":"each","sales":12355.03,"units":1090.0,"deliveries":1061.0},{"month":"2025-03","product":"Rice Pudding, Organic French Dessert","size":"each","sales":10390.7,"units":912.0,"deliveries":882.0},{"month":"2025-02","product":"Pistachio, Organic French Dessert","size":"each","sales":7558.56,"units":676.0,"deliveries":828.0},{"month":"2025-02","product":"Dark Chocolate, Creamy French Dessert","size":"2 x 3.5 oz","sales":19134.17,"units":4604.0,"deliveries":3911.0},{"month":"2025-03","product":"Dark Chocolate, Creamy French Dessert","size":"2 x 3.5 oz","sales":29577.98,"units":9582.0,"deliveries":7133.0},{"month":"2025-02","product":"Dark Chocolate Pint, Organic French Dessert","size":"14 oz","sales":166.52,"units":18.0,"deliveries":17.0},{"month":"2025-03","product":"Dark Chocolate Pint, Organic French Dessert","size":"14 oz","sales":150.06,"units":14.0,"deliveries":13.0},{"month":"2025-02","product":"Rice Pudding Pint, Organic French Dessert","size":"14 oz","sales":12118.33,"units":1451.0,"deliveries":1356.0},{"month":"2025-03","product":"Rice Pudding Pint, Organic French Dessert","size":"14 oz","sales":15027.48,"units":1641.0,"deliveries":1613.0},{"month":"2025-02","product":"Vanilla Bean, Creamy French Dessert","size":"2 x 3.5 oz","sales":14985.43,"units":3605.0,"deliveries":2821.0},{"month":"2025-03","product":"Vanilla Bean, Creamy French Dessert","size":"2 x 3.5 oz","sales":23230.63,"units":7413.0,"deliveries":5399.0},{"month":"2025-02","product":"Plant-Based Vanilla Rice Pudding, Organic Plant Based Dessert","size":"2 x 4 oz","sales":659.13,"units":105.0,"deliveries":86.0},{"month":"2025-03","product":"Plant-Based Vanilla Rice Pudding, Organic Plant Based Dessert","size":"2 x 4 oz","sales":1047.06,"units":164.0,"deliveries":143.0},{"month":"2025-02","product":"Dark Chocolate, Organic French Dessert","size":"2 x 4 oz","sales":23003.97,"units":4811.0,"deliveries":4390.0},{"month":"2025-02","product":"Dark Chocolate, Organic French Dessert","size":"8 oz","sales":4628.6,"units":790.0,"deliveries":702.0},{"month":"2025-03","product":"Dark Chocolate, Organic French Dessert","size":"2 x 4 oz","sales":22611.57,"units":3902.0,"deliveries":3460.0},{"month":"2025-03","product":"Dark Chocolate, Organic French Dessert","size":"8 oz","sales":4544.17,"units":783.0,"deliveries":685.0},{"month":"2025-02","product":"Vanilla Bean, Organic French Dessert","size":"8 oz","sales":2124.28,"units":362.0,"deliveries":306.0},{"month":"2025-02","product":"Vanilla Bean, Organic French Dessert","size":"2 x 4 oz","sales":17160.72,"units":3600.0,"deliveries":3117.0},{"month":"2025-03","product":"Vanilla Bean, Organic French Dessert","size":"2 x 4 oz","sales":22599.99,"units":3909.0,"deliveries":3282.0},{"month":"2025-03","product":"Vanilla Bean, Organic French Dessert","size":"8 oz","sales":2833.52,"units":488.0,"deliveries":423.0},{"month":"2025-02","product":"Plant-Based Oatmilk Chocolate, Organic French Dessert","size":"2 x 4 oz","sales":2688.45,"units":443.0,"deliveries":391.0},{"month":"2025-03","product":"Plant-Based Oatmilk Chocolate, Organic French Dessert","size":"2 x 4 oz","sales":5091.36,"units":814.0,"deliveries":721.0},{"month":"2025-02","product":"Vanilla Rice Pudding, Organic French Dessert","size":"2 x 4 oz","sales":5716.93,"units":959.0,"deliveries":801.0},{"month":"2025-03","product":"Vanilla Rice Pudding, Organic French Dessert","size":"2 x 4 oz","sales":8853.18,"units":1430.0,"deliveries":1229.0},{"month":"2025-03","product":"Dark Chocolate, Organic French Dessert","size":"3.5 oz","sales":3.49,"units":1.0,"deliveries":5.0},{"month":"2025-03","product":"French Dessert, Organic, Vanilla Bean","size":"3.5 oz","sales":26.53,"units":7.0,"deliveries":4.0},{"month":"2025-03","product":"Organic Dark Chocolate French Pudding","size":"2 x 3.5 oz","sales":19.77,"units":3.0,"deliveries":2.0},{"month":"2025-02","product":"Dark Chocolate, Organic French Dessert","size":"3.5 oz","sales":3.49,"units":1.0,"deliveries":3.0},{"month":"2025-02","product":"Vanilla Bean, Organic French Dessert","size":"3.5 oz","sales":3.39,"units":1.0,"deliveries":2.0},{"month":"2025-04","product":"Rice Pudding, Organic French Dessert","size":"each","sales":3940.44,"units":331.0,"deliveries":329.0},{"month":"2025-04","product":"Pistachio, Organic French Dessert","size":"2 x 3.5 oz","sales":2035.87,"units":354.0,"deliveries":289.0},{"month":"2025-04","product":"Creme Brulee, Creamy French Dessert","size":"2 x 3.5 oz","sales":1823.82,"units":278.0,"deliveries":193.0},{"month":"2025-04","product":"Rice Pudding, Organic French Dessert","size":"each","sales":34.3,"units":3.0,"deliveries":9.0},{"month":"2025-04","product":"Dark Chocolate, Creamy French Dessert","size":"2 x 3.5 oz","sales":18014.96,"units":4472.0,"deliveries":3680.0},{"month":"2025-04","product":"Dark Chocolate Pint, Organic French Dessert","size":"14 oz","sales":107.68,"units":12.0,"deliveries":13.0},{"month":"2025-04","product":"Rice Pudding Pint, Organic French Dessert","size":"14 oz","sales":15306.69,"units":1702.0,"deliveries":1545.0},{"month":"2025-04","product":"Vanilla Bean, Creamy French Dessert","size":"2 x 3.5 oz","sales":14144.26,"units":3506.0,"deliveries":2664.0},{"month":"2025-04","product":"Plant-Based Vanilla Rice Pudding, Organic Plant Based Dessert","size":"2 x 4 oz","sales":1091.62,"units":192.0,"deliveries":154.0},{"month":"2025-04","product":"Plant-Based Dark Chocolate, Organic French Dessert","size":"3.5 oz","sales":4.09,"units":1.0,"deliveries":1.0},{"month":"2025-04","product":"Dark Chocolate, Organic French Dessert","size":"8 oz","sales":3063.45,"units":525.0,"deliveries":453.0},{"month":"2025-04","product":"Dark Chocolate, Organic French Dessert","size":"2 x 4 oz","sales":16542.77,"units":2890.0,"deliveries":2435.0},{"month":"2025-04","product":"Vanilla Bean, Organic French Dessert","size":"8 oz","sales":1975.02,"units":338.0,"deliveries":295.0},{"month":"2025-04","product":"Vanilla Bean, Organic French Dessert","size":"2 x 4 oz","sales":19973.63,"units":3504.0,"deliveries":2918.0},{"month":"2025-04","product":"Plant-Based Oatmilk Chocolate, Organic French Dessert","size":"2 x 4 oz","sales":4478.23,"units":755.0,"deliveries":661.0},{"month":"2025-04","product":"Vanilla Rice Pudding, Organic French Dessert","size":"2 x 4 oz","sales":6755.63,"units":1108.0,"deliveries":934.0},{"month":"2025-04","product":"Plant-Based Vanilla Rice Pudding, Organic French Dessert","size":"3.5 oz","sales":7.98,"units":2.0,"deliveries":4.0},{"month":"2025-04","product":"Vanilla Bean, Organic French Dessert","size":"3.5 oz","sales":17.45,"units":5.0,"deliveries":4.0},{"month":"2025-04","product":"Organic Dark Chocolate French Pudding","size":"2 x 3.5 oz","sales":20.37,"units":3.0,"deliveries":2.0},{"month":"2025-05","product":"Rice Pudding, Organic French Dessert","size":"each","sales":5066.51,"units":430.0,"deliveries":444.0},{"month":"2025-05","product":"Pistachio, Organic French Dessert","size":"2 x 3.5 oz","sales":1884.47,"units":320.0,"deliveries":275.0},{"month":"2025-05","product":"Creme Brulee, Creamy French Dessert","size":"2 x 3.5 oz","sales":1442.1,"units":237.0,"deliveries":196.0},{"month":"2025-05","product":"Dark Chocolate, Organic French Dessert","size":"6 x 4 oz","sales":10.92,"units":1.0,"deliveries":2.0},{"month":"2025-05","product":"Pistachio, Organic French Dessert","size":"each","sales":5445.87,"units":488.0,"deliveries":569.0},{"month":"2025-05","product":"Dark Chocolate, Creamy French Dessert","size":"2 x 3.5 oz","sales":17260.56,"units":4278.0,"deliveries":3478.0},{"month":"2025-05","product":"Dark Chocolate Pint, Organic French Dessert","size":"14 oz","sales":186.41,"units":19.0,"deliveries":16.0},{"month":"2025-05","product":"Rice Pudding Pint, Organic French Dessert","size":"14 oz","sales":15174.47,"units":1756.0,"deliveries":1567.0},{"month":"2025-05","product":"Vanilla Bean, Creamy French Dessert","size":"2 x 3.5 oz","sales":13391.76,"units":3314.0,"deliveries":2463.0},{"month":"2025-05","product":"Plant-Based Vanilla Rice Pudding, Organic Plant Based Dessert","size":"2 x 4 oz","sales":623.8,"units":102.0,"deliveries":102.0},{"month":"2025-05","product":"Dark Chocolate, Organic French Dessert","size":"8 oz","sales":2894.71,"units":489.0,"deliveries":436.0},{"month":"2025-05","product":"Dark Chocolate, Organic French Dessert","size":"2 x 4 oz","sales":16365.07,"units":2979.0,"deliveries":2495.0},{"month":"2025-05","product":"Vanilla Bean, Organic French Dessert","size":"8 oz","sales":1717.4,"units":290.0,"deliveries":240.0},{"month":"2025-05","product":"Vanilla Bean, Organic French Dessert","size":"2 x 4 oz","sales":18895.34,"units":3463.0,"deliveries":2868.0},{"month":"2025-05","product":"Plant-Based Oatmilk Chocolate, Organic French Dessert","size":"2 x 4 oz","sales":4107.8,"units":689.0,"deliveries":619.0},{"month":"2025-05","product":"Vanilla Rice Pudding, Organic French Dessert","size":"2 x 4 oz","sales":6761.91,"units":1123.0,"deliveries":957.0},{"month":"2025-05","product":"Vanilla Bean, Organic French Dessert","size":"3.5 oz","sales":3.49,"units":1.0,"deliveries":6.0},{"month":"2025-05","product":"Organic Dark Chocolate French Pudding","size":"2 x 3.5 oz","sales":13.18,"units":2.0,"deliveries":1.0},{"month":"2025-06","product":"Rice Pudding, Organic French Dessert","size":"each","sales":7075.26,"units":599.0,"deliveries":602.0},{"month":"2025-06","product":"Pistachio, Organic French Dessert","size":"2 x 3.5 oz","sales":2266.87,"units":381.0,"deliveries":321.0},{"month":"2025-06","product":"Creme Brulee, Creamy French Dessert","size":"2 x 3.5 oz","sales":1797.09,"units":275.0,"deliveries":207.0},{"month":"2025-06","product":"Dark Chocolate, Organic French Dessert","size":"6 x 4 oz","sales":404.54,"units":36.0,"deliveries":40.0},{"month":"2025-06","product":"Pistachio, Organic French Dessert","size":"each","sales":25040.46,"units":2239.0,"deliveries":2432.0},{"month":"2025-06","product":"Dark Chocolate, Creamy French Dessert","size":"2 x 3.5 oz","sales":20088.13,"units":4970.0,"deliveries":3963.0},{"month":"2025-06","product":"Dark Chocolate Pint, Organic French Dessert","size":"14 oz","sales":114.38,"units":12.0,"deliveries":13.0},{"month":"2025-06","product":"Rice Pudding Pint, Organic French Dessert","size":"14 oz","sales":19070.45,"units":2085.0,"deliveries":1813.0},{"month":"2025-06","product":"Vanilla Bean, Creamy French Dessert","size":"2 x 3.5 oz","sales":16956.65,"units":4186.0,"deliveries":3155.0},{"month":"2025-06","product":"Plant-Based Vanilla Rice Pudding, Organic Plant Based Dessert","size":"2 x 4 oz","sales":1100.09,"units":170.0,"deliveries":148.0},{"month":"2025-06","product":"Dark Chocolate, Organic French Dessert","size":"8 oz","sales":3440.23,"units":577.0,"deliveries":487.0},{"month":"2025-06","product":"Dark Chocolate, Organic French Dessert","size":"2 x 4 oz","sales":19207.41,"units":3310.0,"deliveries":2715.0},{"month":"2025-06","product":"Vanilla Bean, Organic French Dessert","size":"8 oz","sales":2126.53,"units":357.0,"deliveries":305.0},{"month":"2025-06","product":"Vanilla Bean, Organic French Dessert","size":"2 x 4 oz","sales":22718.58,"units":3904.0,"deliveries":3259.0},{"month":"2025-06","product":"Plant-Based Oatmilk Chocolate, Organic French Dessert","size":"2 x 4 oz","sales":5314.1,"units":853.0,"deliveries":772.0},{"month":"2025-06","product":"Vanilla Rice Pudding, Organic French Dessert","size":"2 x 4 oz","sales":8069.19,"units":1319.0,"deliveries":1137.0},{"month":"2025-07","product":"Rice Pudding, Organic French Dessert","size":"each","sales":7373.19,"units":633.0,"deliveries":609.0},{"month":"2025-07","product":"Pistachio, Organic French Dessert","size":"2 x 3.5 oz","sales":1497.31,"units":237.0,"deliveries":201.0},{"month":"2025-07","product":"Creme Brulee, Creamy French Dessert","size":"2 x 3.5 oz","sales":849.53,"units":127.0,"deliveries":108.0},{"month":"2025-07","product":"Dark Chocolate, Organic French Dessert","size":"6 x 4 oz","sales":10.99,"units":1.0,"deliveries":3.0},{"month":"2025-07","product":"Pistachio, Organic French Dessert","size":"each","sales":17418.94,"units":1607.0,"deliveries":1680.0},{"month":"2025-07","product":"Dark Chocolate, Creamy French Dessert","size":"2 x 3.5 oz","sales":20512.73,"units":7033.0,"deliveries":5004.0},{"month":"2025-07","product":"Dark Chocolate Pint, Organic French Dessert","size":"14 oz","sales":119.88,"units":12.0,"deliveries":10.0},{"month":"2025-07","product":"Rice Pudding Pint, Organic French Dessert","size":"14 oz","sales":14253.71,"units":1564.0,"deliveries":1409.0},{"month":"2025-07","product":"Vanilla Bean, Creamy French Dessert","size":"2 x 3.5 oz","sales":16322.62,"units":5531.0,"deliveries":3843.0},{"month":"2025-07","product":"Tapioca Pudding","size":"14 oz","sales":92.32,"units":8.0,"deliveries":6.0},{"month":"2025-07","product":"Plant-Based Vanilla Rice Pudding, Organic Plant Based Dessert","size":"2 x 4 oz","sales":870.44,"units":135.0,"deliveries":117.0},{"month":"2025-07","product":"Dark Chocolate, Organic French Dessert","size":"8 oz","sales":2667.52,"units":448.0,"deliveries":386.0},{"month":"2025-07","product":"Dark Chocolate, Organic French Dessert","size":"2 x 4 oz","sales":13537.94,"units":2283.0,"deliveries":1947.0},{"month":"2025-07","product":"Vanilla Bean, Organic French Dessert","size":"8 oz","sales":1588.93,"units":267.0,"deliveries":252.0},{"month":"2025-07","product":"Vanilla Bean, Organic French Dessert","size":"2 x 4 oz","sales":17650.63,"units":2993.0,"deliveries":2531.0},{"month":"2025-07","product":"Plant-Based Oatmilk Chocolate, Organic French Dessert","size":"2 x 4 oz","sales":4566.03,"units":711.0,"deliveries":620.0},{"month":"2025-07","product":"Vanilla Rice Pudding, Organic French Dessert","size":"2 x 4 oz","sales":6263.83,"units":985.0,"deliveries":846.0},{"month":"2025-06","product":"Dark Chocolate, Organic French Dessert","size":"3.5 oz","sales":8.38,"units":2.0,"deliveries":1.0},{"month":"2025-07","product":"Dark Chocolate, Organic French Dessert","size":"3.5 oz","sales":3.49,"units":1.0,"deliveries":2.0},{"month":"2025-07","product":"Vanilla Bean, Organic French Dessert","size":"3.5 oz","sales":10.47,"units":3.0,"deliveries":3.0},{"month":"2025-08","product":"Rice Pudding, Organic French Dessert","size":"each","sales":13459.57,"units":1172.0,"deliveries":1121.0},{"month":"2025-08","product":"Pistachio, Organic French Dessert","size":"2 x 3.5 oz","sales":1540.84,"units":264.0,"deliveries":231.0},{"month":"2025-08","product":"Creme Brulee, Creamy French Dessert","size":"2 x 3.5 oz","sales":943.55,"units":145.0,"deliveries":116.0},{"month":"2025-08","product":"Pistachio, Organic French Dessert","size":"each","sales":14915.87,"units":1292.0,"deliveries":1322.0},{"month":"2025-08","product":"Pot Rice Pudding Dessert","size":"2 ct","sales":9.98,"units":2.0,"deliveries":4.0},{"month":"2025-08","product":"Dark Chocolate, Creamy French Dessert","size":"2 x 3.5 oz","sales":15157.02,"units":3580.0,"deliveries":2959.0},{"month":"2025-08","product":"Dark Chocolate Pint, Organic French Dessert","size":"14 oz","sales":296.9,"units":30.0,"deliveries":24.0},{"month":"2025-08","product":"Rice Pudding Pint, Organic French Dessert","size":"14 oz","sales":14573.8,"units":1620.0,"deliveries":1455.0},{"month":"2025-08","product":"Vanilla Bean, Creamy French Dessert","size":"2 x 3.5 oz","sales":10839.21,"units":2577.0,"deliveries":1980.0},{"month":"2025-08","product":"Tapioca Pudding","size":"14 oz","sales":78.32,"units":8.0,"deliveries":6.0},{"month":"2025-08","product":"Plant-Based Vanilla Rice Pudding, Organic Plant Based Dessert","size":"2 x 4 oz","sales":822.94,"units":128.0,"deliveries":107.0},{"month":"2025-08","product":"Dark Chocolate, Organic French Dessert","size":"8 oz","sales":2706.66,"units":454.0,"deliveries":386.0},{"month":"2025-08","product":"Dark Chocolate, Organic French Dessert","size":"2 x 4 oz","sales":14436.42,"units":2508.0,"deliveries":2076.0},{"month":"2025-08","product":"Dark Chocolate, Organic French Dessert","size":"","sales":4.99,"units":1.0,"deliveries":1.0},{"month":"2025-08","product":"Vanilla Bean, Organic French Dessert","size":"2 x 4 oz","sales":18652.27,"units":3252.0,"deliveries":2715.0},{"month":"2025-08","product":"Vanilla Bean, Organic French Dessert","size":"8 oz","sales":1375.09,"units":231.0,"deliveries":202.0},{"month":"2025-08","product":"Vanilla Bean, Organic French Dessert","size":"","sales":4.99,"units":1.0,"deliveries":1.0},{"month":"2025-08","product":"Plant-Based Oatmilk Chocolate, Organic French Dessert","size":"2 x 4 oz","sales":5282.31,"units":868.0,"deliveries":741.0},{"month":"2025-08","product":"Vanilla Rice Pudding, Organic French Dessert","size":"2 x 4 oz","sales":5883.77,"units":979.0,"deliveries":766.0},{"month":"2025-08","product":"Vanilla Bean, Organic French Dessert","size":"3.5 oz","sales":4.21,"units":1.0,"deliveries":4.0},{"month":"2025-08","product":"Organic Dark Chocolate French Pudding","size":"2 x 3.5 oz","sales":14.38,"units":2.0,"deliveries":1.0},{"month":"2025-09","product":"Rice Pudding, Organic French Dessert","size":"each","sales":11542.12,"units":1020.0,"deliveries":989.0},{"month":"2025-09","product":"Pistachio, Organic French Dessert","size":"2 x 3.5 oz","sales":1992.77,"units":330.0,"deliveries":271.0},{"month":"2025-09","product":"Creme Brulee, Creamy French Dessert","size":"2 x 3.5 oz","sales":894.12,"units":139.0,"deliveries":117.0},{"month":"2025-09","product":"Pistachio, Organic French Dessert","size":"each","sales":5054.11,"units":432.0,"deliveries":463.0},{"month":"2025-09","product":"Creamy French Recipe Rice Pudding","size":"2 ct","sales":57.69,"units":13.0,"deliveries":11.0},{"month":"2025-09","product":"Creamy French Recipe Rice Pudding","size":"2 x 3.5 oz","sales":84.88,"units":33.0,"deliveries":38.0},{"month":"2025-09","product":"Dark Chocolate, Creamy French Dessert","size":"2 x 3.5 oz","sales":22425.35,"units":5882.0,"deliveries":4902.0},{"month":"2025-09","product":"Dark Chocolate Pint, Organic French Dessert","size":"14 oz","sales":358.84,"units":36.0,"deliveries":36.0},{"month":"2025-09","product":"Rice Pudding Pint, Organic French Dessert","size":"14 oz","sales":17313.08,"units":1965.0,"deliveries":1779.0},{"month":"2025-09","product":"Vanilla Bean, Creamy French Dessert","size":"2 x 3.5 oz","sales":15665.86,"units":4147.0,"deliveries":3165.0},{"month":"2025-09","product":"Tapioca Pudding","size":"14 oz","sales":215.36,"units":24.0,"deliveries":18.0},{"month":"2025-09","product":"Plant-Based Vanilla Rice Pudding, Organic Plant Based Dessert","size":"2 x 4 oz","sales":1361.19,"units":215.0,"deliveries":179.0},{"month":"2025-09","product":"Dark Chocolate, Organic French Dessert","size":"2 x 4 oz","sales":18490.93,"units":3291.0,"deliveries":2838.0},{"month":"2025-09","product":"Dark Chocolate, Organic French Dessert","size":"8 oz","sales":3278.79,"units":551.0,"deliveries":461.0},{"month":"2025-09","product":"Vanilla Bean, Organic French Dessert","size":"8 oz","sales":1639.24,"units":276.0,"deliveries":249.0},{"month":"2025-09","product":"Vanilla Bean, Organic French Dessert","size":"2 x 4 oz","sales":25034.42,"units":4433.0,"deliveries":3666.0},{"month":"2025-09","product":"Plant-Based Oatmilk Chocolate, Organic French Dessert","size":"2 x 4 oz","sales":7069.74,"units":1093.0,"deliveries":940.0},{"month":"2025-09","product":"Vanilla Rice Pudding, Organic French Dessert","size":"2 x 4 oz","sales":7329.29,"units":1140.0,"deliveries":942.0},{"month":"2025-09","product":"Dark Chocolate, Organic French Dessert","size":"3.5 oz","sales":11.35,"units":3.0,"deliveries":4.0},{"month":"2025-10","product":"Rice Pudding, Organic French Dessert","size":"each","sales":5811.46,"units":496.0,"deliveries":466.0},{"month":"2025-10","product":"Pistachio, Organic French Dessert","size":"2 x 3.5 oz","sales":1487.53,"units":241.0,"deliveries":207.0},{"month":"2025-10","product":"Creme Brulee, Creamy French Dessert","size":"2 x 3.5 oz","sales":978.73,"units":147.0,"deliveries":121.0},{"month":"2025-10","product":"Pistachio, Organic French Dessert","size":"each","sales":48.99,"units":7.0,"deliveries":13.0},{"month":"2025-10","product":"Creamy French Recipe Rice Pudding","size":"2 x 3.5 oz","sales":174.62,"units":68.0,"deliveries":61.0},{"month":"2025-10","product":"Creamy French Recipe Rice Pudding","size":"7 oz","sales":168.89,"units":41.0,"deliveries":32.0},{"month":"2025-10","product":"Dark Chocolate, Creamy French Dessert","size":"2 x 3.5 oz","sales":16479.73,"units":3956.0,"deliveries":3387.0},{"month":"2025-10","product":"Dark Chocolate, Creamy French Dessert","size":"7 oz","sales":1080.95,"units":265.0,"deliveries":250.0},{"month":"2025-10","product":"Dark Chocolate Pint, Organic French Dessert","size":"14 oz","sales":250.25,"units":25.0,"deliveries":24.0},{"month":"2025-10","product":"Rice Pudding Pint, Organic French Dessert","size":"14 oz","sales":13712.99,"units":1482.0,"deliveries":1376.0},{"month":"2025-10","product":"Vanilla Bean, Creamy French Dessert","size":"2 x 3.5 oz","sales":10492.85,"units":2499.0,"deliveries":1927.0},{"month":"2025-10","product":"Vanilla Bean, Creamy French Dessert","size":"7 oz","sales":451.29,"units":111.0,"deliveries":110.0},{"month":"2025-10","product":"Tapioca Pudding","size":"14 oz","sales":180.52,"units":18.0,"deliveries":15.0},{"month":"2025-10","product":"Plant-Based Vanilla Rice Pudding, Organic Plant Based Dessert","size":"2 x 4 oz","sales":1000.44,"units":141.0,"deliveries":126.0},{"month":"2025-10","product":"Dark Chocolate, Organic French Dessert","size":"2 x 4 oz","sales":15439.74,"units":2538.0,"deliveries":2157.0},{"month":"2025-10","product":"Dark Chocolate, Organic French Dessert","size":"8 oz","sales":11.58,"units":2.0,"deliveries":1.0},{"month":"2025-10","product":"Vanilla Bean, Organic French Dessert","size":"2 x 4 oz","sales":21255.04,"units":3490.0,"deliveries":2977.0},{"month":"2025-10","product":"Vanilla Bean, Organic French Dessert","size":"8 oz","sales":5.99,"units":1.0,"deliveries":2.0},{"month":"2025-10","product":"Plant-Based Oatmilk Chocolate, Organic French Dessert","size":"2 x 4 oz","sales":6243.83,"units":963.0,"deliveries":861.0},{"month":"2025-10","product":"Vanilla Rice Pudding, Organic French Dessert","size":"2 x 4 oz","sales":6543.73,"units":1015.0,"deliveries":875.0},{"month":"2025-10","product":"Dark Chocolate, Organic French Dessert","size":"3.5 oz","sales":6.98,"units":2.0,"deliveries":3.0},{"month":"2025-10","product":"Organic Dark Chocolate French Pudding","size":"2 x 3.5 oz","sales":14.38,"units":2.0,"deliveries":1.0},{"month":"2025-11","product":"Rice Pudding, Organic French Dessert","size":"each","sales":4975.16,"units":427.0,"deliveries":393.0},{"month":"2025-11","product":"Pistachio, Organic French Dessert","size":"2 x 3.5 oz","sales":1505.29,"units":228.0,"deliveries":185.0},{"month":"2025-11","product":"Creme Brulee, Creamy French Dessert","size":"2 x 3.5 oz","sales":758.09,"units":116.0,"deliveries":95.0},{"month":"2025-11","product":"Dark Chocolate, Organic French Dessert","size":"6 x 4 oz","sales":197.59,"units":19.0,"deliveries":25.0},{"month":"2025-11","product":"Rice Pudding, Organic French Dessert","size":"each","sales":32.98,"units":3.0,"deliveries":5.0},{"month":"2025-11","product":"Pistachio, Organic French Dessert","size":"each","sales":219.91,"units":21.0,"deliveries":30.0},{"month":"2025-11","product":"Creamy French Recipe Rice Pudding","size":"7 oz","sales":255.37,"units":63.0,"deliveries":55.0},{"month":"2025-11","product":"Creamy French Recipe Rice Pudding","size":"2 x 3.5 oz","sales":311.9,"units":72.0,"deliveries":53.0},{"month":"2025-11","product":"Dark Chocolate, Creamy French Dessert","size":"7 oz","sales":2160.77,"units":533.0,"deliveries":443.0},{"month":"2025-11","product":"Dark Chocolate, Creamy French Dessert","size":"2 x 3.5 oz","sales":12854.46,"units":3386.0,"deliveries":2681.0},{"month":"2025-11","product":"Dark Chocolate Pint, Organic French Dessert","size":"14 oz","sales":385.41,"units":39.0,"deliveries":35.0},{"month":"2025-11","product":"Rice Pudding Pint, Organic French Dessert","size":"14 oz","sales":13730.25,"units":1442.0,"deliveries":1254.0},{"month":"2025-11","product":"Vanilla Bean, Creamy French Dessert","size":"2 x 3.5 oz","sales":8723.04,"units":2350.0,"deliveries":1756.0},{"month":"2025-11","product":"Vanilla Bean, Creamy French Dessert","size":"7 oz","sales":999.03,"units":247.0,"deliveries":215.0},{"month":"2025-11","product":"Tapioca Pudding","size":"14 oz","sales":428.58,"units":42.0,"deliveries":29.0},{"month":"2025-11","product":"Plant-Based Vanilla Rice Pudding, Organic Plant Based Dessert","size":"2 x 4 oz","sales":915.62,"units":127.0,"deliveries":116.0},{"month":"2025-11","product":"Dark Chocolate, Organic French Dessert","size":"2 x 4 oz","sales":14887.49,"units":2611.0,"deliveries":2225.0},{"month":"2025-11","product":"Vanilla Bean, Organic French Dessert","size":"2 x 4 oz","sales":21228.07,"units":3710.0,"deliveries":3058.0},{"month":"2025-11","product":"Plant-Based Oatmilk Chocolate, Organic French Dessert","size":"2 x 4 oz","sales":5440.94,"units":819.0,"deliveries":728.0},{"month":"2025-11","product":"Vanilla Rice Pudding, Organic French Dessert","size":"2 x 4 oz","sales":6504.62,"units":1006.0,"deliveries":841.0},{"month":"2025-11","product":"Dark Chocolate, Organic French Dessert","size":"3.5 oz","sales":3.49,"units":1.0,"deliveries":2.0},{"month":"2025-11","product":"Vanilla Bean, Organic French Dessert","size":"3.5 oz","sales":6.98,"units":2.0,"deliveries":4.0},{"month":"2025-12","product":"Rice Pudding, Organic French Dessert","size":"each","sales":6022.89,"units":516.0,"deliveries":499.0},{"month":"2025-12","product":"Pistachio, Organic French Dessert","size":"2 x 3.5 oz","sales":2152.96,"units":326.0,"deliveries":281.0},{"month":"2025-12","product":"Creme Brulee, Creamy French Dessert","size":"2 x 3.5 oz","sales":994.7,"units":140.0,"deliveries":116.0},{"month":"2025-12","product":"Creamy French Recipe Rice Pudding","size":"7 oz","sales":346.34,"units":86.0,"deliveries":71.0},{"month":"2025-12","product":"Creamy French Recipe Rice Pudding","size":"2 x 3.5 oz","sales":428.27,"units":101.0,"deliveries":78.0},{"month":"2025-12","product":"Dark Chocolate, Creamy French Dessert","size":"2 x 3.5 oz","sales":15075.5,"units":3573.0,"deliveries":2866.0},{"month":"2025-12","product":"Dark Chocolate, Creamy French Dessert","size":"7 oz","sales":2910.65,"units":725.0,"deliveries":610.0},{"month":"2025-12","product":"Dark Chocolate Pint, Organic French Dessert","size":"14 oz","sales":769.14,"units":76.0,"deliveries":71.0},{"month":"2025-12","product":"Rice Pudding Pint, Organic French Dessert","size":"14 oz","sales":16504.05,"units":1736.0,"deliveries":1536.0},{"month":"2025-12","product":"Vanilla Bean, Creamy French Dessert","size":"2 x 3.5 oz","sales":10828.57,"units":2583.0,"deliveries":1832.0},{"month":"2025-12","product":"Vanilla Bean, Creamy French Dessert","size":"7 oz","sales":1478.32,"units":368.0,"deliveries":317.0},{"month":"2025-12","product":"Tapioca Pudding","size":"14 oz","sales":619.93,"units":67.0,"deliveries":48.0},{"month":"2025-12","product":"Plant-Based Vanilla Rice Pudding, Organic Plant Based Dessert","size":"2 x 4 oz","sales":948.1,"units":134.0,"deliveries":132.0},{"month":"2025-12","product":"Dark Chocolate, Organic French Dessert","size":"2 x 4 oz","sales":17214.73,"units":2730.0,"deliveries":2279.0},{"month":"2025-12","product":"Vanilla Bean, Organic French Dessert","size":"2 x 4 oz","sales":25827.7,"units":4056.0,"deliveries":3295.0},{"month":"2025-12","product":"Plant-Based Oatmilk Chocolate, Organic French Dessert","size":"2 x 4 oz","sales":7466.95,"units":1108.0,"deliveries":977.0},{"month":"2025-12","product":"Vanilla Rice Pudding, Organic French Dessert","size":"2 x 4 oz","sales":7665.79,"units":1151.0,"deliveries":953.0},{"month":"2025-12","product":"Organic Dark Chocolate French Pudding","size":"2 x 3.5 oz","sales":21.57,"units":3.0,"deliveries":2.0},{"month":"2026-01","product":"Rice Pudding, Organic French Dessert","size":"each","sales":3977.95,"units":341.0,"deliveries":327.0},{"month":"2026-01","product":"Pistachio, Organic French Dessert","size":"2 x 3.5 oz","sales":2188.46,"units":346.0,"deliveries":308.0},{"month":"2026-01","product":"Creme Brulee, Creamy French Dessert","size":"2 x 3.5 oz","sales":633.56,"units":93.0,"deliveries":97.0},{"month":"2026-01","product":"Creamy French Recipe Rice Pudding","size":"2 x 3.5 oz","sales":310.14,"units":85.0,"deliveries":72.0},{"month":"2026-01","product":"Creamy French Recipe Rice Pudding","size":"7 oz","sales":384.95,"units":95.0,"deliveries":87.0},{"month":"2026-01","product":"Dark Chocolate, Creamy French Dessert","size":"2 x 3.5 oz","sales":11733.03,"units":2825.0,"deliveries":2248.0},{"month":"2026-01","product":"Dark Chocolate, Creamy French Dessert","size":"7 oz","sales":1911.79,"units":461.0,"deliveries":418.0},{"month":"2026-01","product":"Dark Chocolate Pint, Organic French Dessert","size":"14 oz","sales":548.91,"units":59.0,"deliveries":54.0},{"month":"2026-01","product":"Rice Pudding Pint, Organic French Dessert","size":"14 oz","sales":15160.72,"units":1628.0,"deliveries":1465.0},{"month":"2026-01","product":"Vanilla Bean, Creamy French Dessert","size":"2 x 3.5 oz","sales":8190.23,"units":1951.0,"deliveries":1479.0},{"month":"2026-01","product":"Vanilla Bean, Creamy French Dessert","size":"7 oz","sales":1163.27,"units":283.0,"deliveries":245.0},{"month":"2026-01","product":"Tapioca Pudding","size":"14 oz","sales":728.58,"units":82.0,"deliveries":61.0},{"month":"2026-01","product":"Plant-Based Vanilla Rice Pudding, Organic Plant Based Dessert","size":"2 x 4 oz","sales":989.42,"units":150.0,"deliveries":149.0},{"month":"2026-01","product":"Dark Chocolate, Organic French Dessert","size":"2 x 4 oz","sales":17820.06,"units":2902.0,"deliveries":2424.0},{"month":"2026-01","product":"Vanilla Bean, Organic French Dessert","size":"2 x 4 oz","sales":25309.92,"units":4052.0,"deliveries":3301.0},{"month":"2026-01","product":"Plant-Based Oatmilk Chocolate, Organic French Dessert","size":"2 x 4 oz","sales":7031.78,"units":1073.0,"deliveries":991.0},{"month":"2026-01","product":"Vanilla Rice Pudding, Organic French Dessert","size":"2 x 4 oz","sales":8469.76,"units":1310.0,"deliveries":1124.0},{"month":"2026-01","product":"Organic Dark Chocolate French Pudding","size":"2 x 3.5 oz","sales":14.38,"units":2.0,"deliveries":1.0},{"month":"2026-02","product":"Rice Pudding, Organic French Dessert","size":"each","sales":3529.86,"units":303.0,"deliveries":274.0},{"month":"2026-02","product":"Pistachio, Organic French Dessert","size":"2 x 3.5 oz","sales":6.89,"units":1.0,"deliveries":1.0},{"month":"2026-02","product":"Pistachio, Organic French Dessert","size":"2 x 4 oz","sales":1892.75,"units":316.0,"deliveries":303.0},{"month":"2026-02","product":"Creme Brulee, Creamy French Dessert","size":"2 x 3.5 oz","sales":406.67,"units":61.0,"deliveries":81.0},{"month":"2026-02","product":"Extra Creamy Rice Pudding","size":"7 oz","sales":758.26,"units":194.0,"deliveries":168.0},{"month":"2026-02","product":"Extra Creamy Rice Pudding","size":"2 x 3.5 oz","sales":435.42,"units":98.0,"deliveries":92.0},{"month":"2026-02","product":"Extra Creamy Chocolate French Pudding","size":"7 oz","sales":2897.04,"units":726.0,"deliveries":670.0},{"month":"2026-02","product":"Extra Creamy Chocolate French Pudding","size":"2 x 3.5 oz","sales":17776.41,"units":5712.0,"deliveries":4254.0},{"month":"2026-02","product":"Dark Chocolate Pint, Organic French Dessert","size":"14 oz","sales":629.27,"units":63.0,"deliveries":56.0},{"month":"2026-02","product":"Rice Pudding Pint, Organic French Dessert","size":"14 oz","sales":16690.81,"units":1884.0,"deliveries":1707.0},{"month":"2026-02","product":"Extra Creamy Vanilla French Pudding","size":"7 oz","sales":1286.47,"units":323.0,"deliveries":305.0},{"month":"2026-02","product":"Extra Creamy Vanilla French Pudding","size":"2 x 3.5 oz","sales":12487.56,"units":4041.0,"deliveries":2873.0},{"month":"2026-02","product":"Tapioca Pudding","size":"14 oz","sales":887.18,"units":92.0,"deliveries":71.0},{"month":"2026-02","product":"Plant-Based Vanilla Rice Pudding, Organic Plant Based Dessert","size":"2 x 4 oz","sales":782.25,"units":110.0,"deliveries":109.0},{"month":"2026-02","product":"Dark Chocolate, Organic French Dessert","size":"2 x 4 oz","sales":21562.56,"units":3981.0,"deliveries":3127.0},{"month":"2026-02","product":"Vanilla Bean, Organic French Dessert","size":"2 x 4 oz","sales":28035.8,"units":4894.0,"deliveries":3841.0},{"month":"2026-02","product":"Plant-Based Oatmilk Chocolate, Organic French Dessert","size":"2 x 4 oz","sales":7117.49,"units":1101.0,"deliveries":1010.0},{"month":"2026-02","product":"Vanilla Rice Pudding, Organic French Dessert","size":"2 x 4 oz","sales":8977.67,"units":1430.0,"deliveries":1206.0},{"month":"2026-03","product":"Rice Pudding, Organic French Dessert","size":"each","sales":1503.57,"units":132.0,"deliveries":129.0},{"month":"2026-03","product":"Pistachio, Organic French Dessert","size":"2 x 4 oz","sales":2092.47,"units":320.0,"deliveries":274.0},{"month":"2026-03","product":"Creme Brulee, Creamy French Dessert","size":"2 x 3.5 oz","sales":322.22,"units":48.0,"deliveries":43.0},{"month":"2026-03","product":"Dark Chocolate, Organic French Dessert","size":"6 x 4 oz","sales":457.23,"units":40.0,"deliveries":46.0},{"month":"2026-03","product":"Pistachio, Organic French Dessert","size":"each","sales":11325.08,"units":997.0,"deliveries":1046.0},{"month":"2026-03","product":"Extra Creamy Rice Pudding","size":"2 x 3.5 oz","sales":705.32,"units":164.0,"deliveries":145.0},{"month":"2026-03","product":"Extra Creamy Rice Pudding","size":"7 oz","sales":1486.23,"units":337.0,"deliveries":277.0},{"month":"2026-03","product":"Extra Creamy Chocolate French Pudding","size":"2 x 3.5 oz","sales":26541.53,"units":7217.0,"deliveries":5783.0},{"month":"2026-03","product":"Extra Creamy Chocolate French Pudding","size":"7 oz","sales":4978.7,"units":1130.0,"deliveries":1015.0},{"month":"2026-03","product":"Dark Chocolate Pint, Organic French Dessert","size":"14 oz","sales":806.43,"units":77.0,"deliveries":68.0},{"month":"2026-03","product":"Rice Pudding Pint, Organic French Dessert","size":"14 oz","sales":9697.95,"units":980.0,"deliveries":954.0},{"month":"2026-03","product":"Extra Creamy Vanilla French Pudding","size":"2 x 3.5 oz","sales":17929.2,"units":4933.0,"deliveries":3600.0},{"month":"2026-03","product":"Extra Creamy Vanilla French Pudding","size":"7 oz","sales":2118.19,"units":481.0,"deliveries":409.0},{"month":"2026-03","product":"Tapioca Pudding","size":"14 oz","sales":1808.09,"units":181.0,"deliveries":158.0},{"month":"2026-03","product":"Tapioca Pudding with Organic Dairy","size":"6 x 24 oz","sales":16990.43,"units":1499.0,"deliveries":1554.0},{"month":"2026-03","product":"Plant-Based Vanilla Rice Pudding, Organic Plant Based Dessert","size":"2 x 4 oz","sales":1246.55,"units":169.0,"deliveries":166.0},{"month":"2026-03","product":"Dark Chocolate, Organic French Dessert","size":"2 x 4 oz","sales":25617.68,"units":4036.0,"deliveries":3364.0},{"month":"2026-03","product":"Vanilla Bean, Organic French Dessert","size":"2 x 4 oz","sales":36234.46,"units":5700.0,"deliveries":4747.0},{"month":"2026-03","product":"Plant-Based Oatmilk Chocolate, Organic French Dessert","size":"2 x 4 oz","sales":9633.51,"units":1426.0,"deliveries":1257.0},{"month":"2026-03","product":"Plant-Based Oatmilk Chocolate, Organic French Dessert","size":"2 x per lb","sales":5.99,"units":1.0,"deliveries":1.0},{"month":"2026-03","product":"Vanilla Rice Pudding, Organic French Dessert","size":"2 x per lb","sales":17.97,"units":3.0,"deliveries":3.0},{"month":"2026-03","product":"Vanilla Rice Pudding, Organic French Dessert","size":"2 x 4 oz","sales":10984.83,"units":1656.0,"deliveries":1388.0},{"month":"2026-04","product":"Pistachio, Organic French Dessert","size":"2 x 4 oz","sales":3943.81,"units":622.0,"deliveries":578.0},{"month":"2026-04","product":"Creme Brulee, Creamy French Dessert","size":"2 x 3.5 oz","sales":313.49,"units":51.0,"deliveries":36.0},{"month":"2026-04","product":"Dark Chocolate, Organic French Dessert","size":"6 x 4 oz","sales":799.82,"units":71.0,"deliveries":73.0},{"month":"2026-04","product":"Rice Pudding, Organic French Dessert","size":"each","sales":10.99,"units":1.0,"deliveries":3.0},{"month":"2026-04","product":"Pistachio, Organic French Dessert","size":"each","sales":7922.42,"units":698.0,"deliveries":748.0},{"month":"2026-04","product":"Extra Creamy Rice Pudding","size":"7 oz","sales":1075.96,"units":244.0,"deliveries":192.0},{"month":"2026-04","product":"Extra Creamy Rice Pudding","size":"2 x 3.5 oz","sales":493.04,"units":124.0,"deliveries":116.0},{"month":"2026-04","product":"Extra Creamy Chocolate French Pudding","size":"2 x 3.5 oz","sales":17125.91,"units":4082.0,"deliveries":3355.0},{"month":"2026-04","product":"Extra Creamy Chocolate French Pudding","size":"7 oz","sales":3733.33,"units":847.0,"deliveries":706.0},{"month":"2026-04","product":"Vanilla Bean Creamy French Dessert","size":"3.5 oz","sales":36.21,"units":18.0,"deliveries":10.0},{"month":"2026-04","product":"Extra Creamy Chocolate Pudding Single Serve","size":"3.5 oz","sales":42.33,"units":20.0,"deliveries":16.0},{"month":"2026-04","product":"Dark Chocolate Pint, Organic French Dessert","size":"14 oz","sales":633.52,"units":68.0,"deliveries":77.0},{"month":"2026-04","product":"Rice Pudding Pint, Organic French Dessert","size":"14 oz","sales":4034.2,"units":427.0,"deliveries":395.0},{"month":"2026-04","product":"Extra Creamy Vanilla French Pudding","size":"7 oz","sales":1447.33,"units":327.0,"deliveries":275.0},{"month":"2026-04","product":"Extra Creamy Vanilla French Pudding","size":"2 x 3.5 oz","sales":11013.75,"units":2627.0,"deliveries":1936.0},{"month":"2026-04","product":"Tapioca Pudding","size":"14 oz","sales":1048.68,"units":112.0,"deliveries":119.0},{"month":"2026-04","product":"Tapioca Pudding with Organic Dairy","size":"6 x 24 oz","sales":29689.46,"units":2611.0,"deliveries":2549.0},{"month":"2026-04","product":"Extra Creamy Tapioca Pudding","size":"14 oz","sales":88.72,"units":8.0,"deliveries":2.0},{"month":"2026-04","product":"Extra Creamy Strawberry Pudding with 8g of Protein","size":"14 oz","sales":165.11,"units":19.0,"deliveries":35.0},{"month":"2026-04","product":"Plant-Based Vanilla Rice Pudding, Organic Plant Based Dessert","size":"2 x 4 oz","sales":1222.64,"units":190.0,"deliveries":182.0},{"month":"2026-04","product":"Dark Chocolate, Organic French Dessert","size":"2 x 4 oz","sales":18304.35,"units":2908.0,"deliveries":2391.0},{"month":"2026-04","product":"Vanilla Bean, Organic French Dessert","size":"2 x 4 oz","sales":26689.71,"units":4198.0,"deliveries":3457.0},{"month":"2026-04","product":"Plant-Based Oatmilk Chocolate, Organic French Dessert","size":"2 x 4 oz","sales":6405.66,"units":995.0,"deliveries":907.0},{"month":"2026-04","product":"Vanilla Rice Pudding, Organic French Dessert","size":"2 x 4 oz","sales":8849.9,"units":1400.0,"deliveries":1163.0},{"month":"2026-04","product":"Organic Dark Chocolate French Pudding","size":"2 x 3.5 oz","sales":14.38,"units":2.0,"deliveries":1.0},{"month":"2026-05","product":"Pistachio, Organic French Dessert","size":"2 x 4 oz","sales":3861.83,"units":573.0,"deliveries":515.0},{"month":"2026-05","product":"Creme Brulee, Creamy French Dessert","size":"2 x 3.5 oz","sales":113.83,"units":17.0,"deliveries":24.0},{"month":"2026-05","product":"Dark Chocolate, Organic French Dessert","size":"6 x 4 oz","sales":72.05,"units":6.0,"deliveries":6.0},{"month":"2026-05","product":"Rice Pudding, Organic French Dessert","size":"each","sales":10.99,"units":1.0,"deliveries":1.0},{"month":"2026-05","product":"Pistachio, Organic French Dessert","size":"each","sales":221.59,"units":20.0,"deliveries":18.0},{"month":"2026-05","product":"Extra Creamy Rice Pudding","size":"7 oz","sales":832.91,"units":189.0,"deliveries":162.0},{"month":"2026-05","product":"Extra Creamy Rice Pudding","size":"2 x 3.5 oz","sales":563.96,"units":124.0,"deliveries":93.0},{"month":"2026-05","product":"Extra Creamy Chocolate French Pudding","size":"7 oz","sales":3196.35,"units":725.0,"deliveries":598.0},{"month":"2026-05","product":"Extra Creamy Chocolate French Pudding","size":"2 x 3.5 oz","sales":13770.34,"units":3263.0,"deliveries":2656.0},{"month":"2026-05","product":"Vanilla Bean Creamy French Dessert","size":"3.5 oz","sales":120.0,"units":52.0,"deliveries":29.0},{"month":"2026-05","product":"Extra Creamy Chocolate Pudding Single Serve","size":"3.5 oz","sales":35.73,"units":16.0,"deliveries":17.0},{"month":"2026-05","product":"French Dessert Rice Pudding","size":"3.5 oz","sales":11.13,"units":5.0,"deliveries":3.0},{"month":"2026-05","product":"Dark Chocolate Pint, Organic French Dessert","size":"14 oz","sales":211.59,"units":21.0,"deliveries":21.0},{"month":"2026-05","product":"Rice Pudding Pint, Organic French Dessert","size":"14 oz","sales":540.6,"units":60.0,"deliveries":83.0},{"month":"2026-05","product":"Extra Creamy Vanilla French Pudding","size":"2 x 3.5 oz","sales":9495.66,"units":2273.0,"deliveries":1576.0},{"month":"2026-05","product":"Extra Creamy Vanilla French Pudding","size":"7 oz","sales":1438.74,"units":326.0,"deliveries":264.0},{"month":"2026-05","product":"Tapioca Pudding","size":"14 oz","sales":36.36,"units":4.0,"deliveries":31.0},{"month":"2026-05","product":"Tapioca Pudding with Organic Dairy","size":"6 x 24 oz","sales":23296.93,"units":2182.0,"deliveries":2040.0},{"month":"2026-04","product":"Extra Creamy Rice Pudding","size":"14 oz","sales":11.09,"units":1.0,"deliveries":1.0},{"month":"2026-05","product":"Extra Creamy Rice Pudding","size":"14 oz","sales":254.73,"units":27.0,"deliveries":18.0},{"month":"2026-05","product":"Extra Creamy Tapioca Pudding","size":"14 oz","sales":624.27,"units":63.0,"deliveries":42.0},{"month":"2026-05","product":"Extra Creamy Chocolate French Pudding","size":"14 oz","sales":89.31,"units":9.0,"deliveries":9.0},{"month":"2026-05","product":"Extra Creamy Strawberry Pudding with 8g of Protein","size":"14 oz","sales":4040.85,"units":465.0,"deliveries":506.0},{"month":"2026-05","product":"Extra Creamy Strawberry Pudding with 8g of Protein","size":"4 x 14 oz","sales":41.36,"units":4.0,"deliveries":5.0},{"month":"2026-04","product":"Extra Creamy Chocolate Pudding with 8g of Protein","size":"14 oz","sales":191.18,"units":22.0,"deliveries":39.0},{"month":"2026-05","product":"Extra Creamy Chocolate Pudding with 8g of Protein","size":"14 oz","sales":7751.48,"units":892.0,"deliveries":934.0},{"month":"2026-05","product":"Extra Creamy Chocolate Pudding with 8g of Protein","size":"4 x 14 oz","sales":93.31,"units":9.0,"deliveries":10.0},{"month":"2026-05","product":"Plant-Based Vanilla Rice Pudding, Organic Plant Based Dessert","size":"2 x 4 oz","sales":868.92,"units":118.0,"deliveries":113.0},{"month":"2026-05","product":"Dark Chocolate, Organic French Dessert","size":"2 x 4 oz","sales":17430.42,"units":2768.0,"deliveries":2190.0},{"month":"2026-05","product":"Vanilla Bean, Organic French Dessert","size":"2 x 4 oz","sales":26897.24,"units":4232.0,"deliveries":3403.0},{"month":"2026-05","product":"Plant-Based Oatmilk Chocolate, Organic French Dessert","size":"2 x 4 oz","sales":6318.37,"units":958.0,"deliveries":838.0},{"month":"2026-05","product":"Vanilla Rice Pudding, Organic French Dessert","size":"2 x 4 oz","sales":8610.44,"units":1341.0,"deliveries":1088.0}];
+
+/* ---- STATE ---- */
+let weekData={};
+let activeTab='summary';
+let chartRefs={};
+let sortKey='sales',sortDir=-1;
+let prodSortKey='sales',prodSortDir=-1;
+let icipSortKey='sales',icipSortDir=-1;
+let icipProdMonth='';
+
+function loadStorage(){
+  try{const s=localStorage.getItem('pp_ic_v2');if(s)weekData=JSON.parse(s);}catch(e){}
+  weekData["2026-06-14"]={campaigns:SEED_CAMPAIGNS.campaigns,products:SEED_PRODUCTS.products};
+  saveStorage();
 }
-function rowsOf(ch){ return DATA[ch].map(derive); }
-function delta(cur,prev,inv){ // returns {txt,cls}
-  if(prev==null||prev===0) return {txt:'',cls:''};
-  const d=(cur-prev)/Math.abs(prev)*100;
-  const good = inv ? d<0 : d>0;
-  const arrow = d>=0?'&#9650;':'&#9660;';
-  return {txt:`${arrow} ${nf(Math.abs(d),1)}%`, cls: good?'pos':'neg'};
-}
-function kpi(lbl,val,dl){
-  return `<div class="kpi"><div class="lbl">${lbl}</div><div class="val">${val}</div>`+
-    (dl&&dl.txt?`<div class="chg ${dl.cls}">${dl.txt} vs last wk</div>`:`<div class="chg">&nbsp;</div>`)+`</div>`;
-}
+function saveStorage(){try{localStorage.setItem('pp_ic_v2',JSON.stringify(weekData));}catch(e){}}
 
-let charts=[];
-function clearCharts(){ charts.forEach(c=>c.destroy()); charts=[]; }
-
-function channelPanel(ch){
-  const rows=rowsOf(ch); const last=rows[rows.length-1], prev=rows[rows.length-2];
-  const c=CH[ch].color;
-  const cards=
-    kpi('Spend', usd(last.spend), delta(last.spend,prev&&prev.spend))+
-    kpi('Attributed Sales', usd(last.sales), delta(last.sales,prev&&prev.sales))+
-    kpi('ROAS', nf(last.roas,2)+'x', delta(last.roas,prev&&prev.roas))+
-    kpi('Impressions', nf(last.impr), delta(last.impr,prev&&prev.impr))+
-    kpi('Clicks', nf(last.clicks), delta(last.clicks,prev&&prev.clicks))+
-    kpi('CTR', pct(last.ctr), delta(last.ctr,prev&&prev.ctr))+
-    kpi('CPC', usd(last.cpc,2), delta(last.cpc,prev&&prev.cpc,true))+
-    kpi('Orders', nf(last.orders), delta(last.orders,prev&&prev.orders))+
-    kpi('Units (sold)', nf(last.units), delta(last.units,prev&&prev.units));
-  // weeks-as-columns table
-  const head=`<th class="left">Metric</th>`+rows.map(r=>`<th>${fwk(r.wk)}</th>`).join('');
-  const mrow=(lbl,fn)=>`<tr><td class="left">${lbl}</td>`+rows.map(r=>`<td>${fn(r)}</td>`).join('')+`</tr>`;
-  const body=
-    `<tr class="grp"><td class="left" colspan="${rows.length+1}">Sales &amp; Spend</td></tr>`+
-    mrow('Spend', r=>usd(r.spend))+
-    mrow('Attributed Sales', r=>usd(r.sales))+
-    mrow('ROAS', r=>nf(r.roas,2)+'x')+
-    mrow('$ / Unit', r=>usd(r.ppu,2))+
-    `<tr class="grp"><td class="left" colspan="${rows.length+1}">Funnel</td></tr>`+
-    mrow('Impressions', r=>nf(r.impr))+
-    mrow('Clicks', r=>nf(r.clicks))+
-    mrow('CTR', r=>pct(r.ctr))+
-    mrow('CPC', r=>usd(r.cpc,2))+
-    mrow('Orders', r=>nf(r.orders))+
-    mrow('Conv. Rate', r=>pct(r.cvr))+
-    mrow('Units', r=>nf(r.units));
-  return `<div class="kpi-row">${cards}</div>
-    <div class="chart-row">
-      <div class="chart-box"><h3>Spend vs. Attributed Sales</h3><canvas id="c_${ch}_1"></canvas></div>
-      <div class="chart-box"><h3>ROAS by Week</h3><canvas id="c_${ch}_2"></canvas></div>
-    </div>
-    <div class="section-hd"><h2>${CH[ch].name} — Weekly Detail</h2><span class="badge">${rows.length} weeks</span></div>
-    <div class="tbl-wrap"><table><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>`;
+/* ---- CSV PARSING ---- */
+function splitLine(line){
+  const r=[];let cur='',q=false;
+  for(let i=0;i<line.length;i++){const c=line[i];if(c==='"')q=!q;else if(c===','&&!q){r.push(cur);cur='';}else cur+=c;}
+  r.push(cur);return r;
+}
+function extractWeekEnd(filename){
+  const m=filename.match(/(\d{8})-(\d{8})/);
+  if(m){const d=m[2];return `${d.slice(0,4)}-${d.slice(4,6)}-${d.slice(6,8)}`;}
+  return new Date().toISOString().slice(0,10);
+}
+function parseCSV(text,filename){
+  const lines=text.trim().split('\n');
+  const headers=splitLine(lines[0]).map(h=>h.trim().replace(/^"|"$/g,''));
+  const weekEnd=extractWeekEnd(filename);
+  const isProduct=headers.includes('product');
+  const idx=h=>headers.indexOf(h);
+  if(isProduct){
+    const iStatus=idx('status'),iCampaign=idx('campaign'),iAdGroup=idx('ad_group'),
+      iProduct=idx('product'),iSize=idx('product_size'),
+      iSpend=idx('spend'),iSales=idx('attributed_sales'),iUnits=idx('attributed_quantities'),
+      iImpr=idx('impressions'),iClicks=idx('clicks'),
+      iNtbS=idx('ntb_attributed_sales'),iNtbP=idx('percent_ntb_attributed_sales');
+    const products=[];
+    for(let i=1;i<lines.length;i++){
+      const c=splitLine(lines[i]);const spend=parseFloat(c[iSpend])||0;if(!spend)continue;
+      products.push({product:(c[iProduct]||'').replace(/^Petit Pot /i,'').replace(/,.*$/,'').trim(),
+        size:(c[iSize]||'').trim(),campaign:(c[iCampaign]||'').replace(/^"|"$/g,'').trim(),
+        adGroup:(c[iAdGroup]||'').trim(),status:(c[iStatus]||'').toLowerCase(),
+        spend,sales:parseFloat(c[iSales])||0,units:parseFloat(c[iUnits])||0,
+        impr:parseInt(c[iImpr])||0,clicks:parseInt(c[iClicks])||0,
+        ntb_sales:parseFloat(c[iNtbS])||0,ntb_pct:parseFloat(c[iNtbP])/100||0});
+    }
+    return{weekEnd,type:'products',data:products};
+  }else{
+    const iStatus=idx('status'),iCamp=idx('campaign'),
+      iSpend=idx('spend'),iSales=idx('attributed_sales'),iUnits=idx('attributed_quantities'),
+      iImpr=idx('impressions'),iClicks=idx('clicks'),
+      iNtbS=idx('ntb_attributed_sales'),iNtbP=idx('percent_ntb_attributed_sales');
+    if(iSpend<0||iSales<0)throw new Error('Unrecognized CSV format.');
+    const campaigns=[];
+    for(let i=1;i<lines.length;i++){
+      const c=splitLine(lines[i]);const spend=parseFloat(c[iSpend])||0;if(!spend)continue;
+      campaigns.push({campaign:(c[iCamp]||'').replace(/^"|"$/g,'').trim(),
+        status:(c[iStatus]||'').toLowerCase(),
+        spend,sales:parseFloat(c[iSales])||0,units:parseFloat(c[iUnits])||0,
+        impr:parseInt(c[iImpr])||0,clicks:parseInt(c[iClicks])||0,
+        ntb_sales:parseFloat(c[iNtbS])||0,ntb_pct:parseFloat(c[iNtbP])/100||0});
+    }
+    return{weekEnd,type:'campaigns',data:campaigns};
+  }
 }
 
-function channelCharts(ch){
-  const rows=rowsOf(ch); const labels=rows.map(r=>fwk(r.wk)); const c=CH[ch].color;
-  charts.push(new Chart(document.getElementById('c_'+ch+'_1'),{type:'line',
-    data:{labels,datasets:[
-      {label:'Spend',data:rows.map(r=>r.spend),borderColor:'#fd5000',backgroundColor:'#fd500022',tension:.3,fill:true},
-      {label:'Sales',data:rows.map(r=>r.sales),borderColor:c,backgroundColor:c+'22',tension:.3,fill:true}]},
-    options:{plugins:{legend:{labels:{boxWidth:12,font:{size:11}}}},scales:{y:{ticks:{callback:v=>'$'+(v/1000)+'k'}}}}}));
-  charts.push(new Chart(document.getElementById('c_'+ch+'_2'),{type:'bar',
-    data:{labels,datasets:[{label:'ROAS',data:rows.map(r=>r.roas.toFixed(2)),backgroundColor:c}]},
-    options:{plugins:{legend:{display:false}},scales:{y:{ticks:{callback:v=>v+'x'}}}}}));
+/* ---- XLSX PARSING (Tracker file) ---- */
+function parseTrackerXLSX(wb){
+  const MONTHS=['january','february','march','april','may','june','july','august','september','october','november','december'];
+  const MM=m=>{const i=MONTHS.findIndex(x=>m.toLowerCase().trim().startsWith(x.slice(0,3)));return i>=0?String(i+1).padStart(2,'0'):null;};
+  const numOf=v=>typeof v==='number'?v:null;
+
+  // Summary sheet
+  const ws=wb.Sheets['Summary '];
+  if(!ws)throw new Error('Could not find "Summary " sheet in this file.');
+  const sumRows=XLSX.utils.sheet_to_json(ws,{header:1,defval:'',raw:true});
+  const newSummary={...TRACKER_SUMMARY};
+  let curYear=null;
+  for(const row of sumRows){
+    if(typeof row[1]==='number'&&[2024,2025,2026].includes(row[1])){curYear=row[1];continue;}
+    if(curYear&&typeof row[1]==='string'){
+      const mm=MM(row[1]);
+      if(mm&&numOf(row[4])){
+        const key=`${curYear}-${mm}`;
+        newSummary[key]={month:key,year:curYear,
+          deliveries:numOf(row[2]),sales:row[4],units:numOf(row[6]),
+          sp_spend:numOf(row[11]),attr_units:numOf(row[12]),org_units:numOf(row[13]),arp:numOf(row[14])};
+      }
+    }
+  }
+
+  // Campaign sheet
+  const wc=wb.Sheets['Campaign '];
+  const newCampaigns={...TRACKER_CAMPAIGNS};
+  if(wc){
+    const cRows=XLSX.utils.sheet_to_json(wc,{header:1,defval:'',raw:true});
+    let curCamp=null;
+    for(const row of cRows){
+      if(row[0]&&typeof row[0]==='string'&&row[0].trim()!==''){curCamp=row[0].trim().replace(/\s+$/,'');if(!newCampaigns[curCamp])newCampaigns[curCamp]={};}
+      if(curCamp&&row[1]&&typeof row[1]==='string'){
+        const mm=MM(row[1]);
+        if(mm&&(numOf(row[2])||numOf(row[4]))){
+          newCampaigns[curCamp][mm]={spend:numOf(row[2])||0,sales:numOf(row[4])||0,
+            units:numOf(row[5]),impr:numOf(row[6]),clicks:numOf(row[7]),
+            ntb_sales:numOf(row[10]),ntb_pct:numOf(row[11])};
+        }
+      }
+    }
+  }
+
+  // UPC sheet
+  const wu=wb.Sheets['UPC'];
+  const newProds=[];
+  if(wu){
+    const uRows=XLSX.utils.sheet_to_json(wu,{header:1,defval:'',raw:false,cellDates:true});
+    const byKey={};
+    for(let i=1;i<uRows.length;i++){
+      const row=uRows[i];
+      if(!row[9]||!row[0])continue;
+      const wkDate=row[9];
+      if(!wkDate)continue;
+      const wkStr=typeof wkDate==='string'?wkDate.slice(0,10):(wkDate instanceof Date?wkDate.toISOString().slice(0,10):'');
+      if(!wkStr||wkStr.slice(0,4)<'2025')continue;
+      const ym=wkStr.slice(0,7);
+      const key=`${ym}|${row[0]}|${row[2]}`;
+      if(!byKey[key])byKey[key]={month:ym,product:String(row[1]||''),size:String(row[2]||''),sales:0,units:0,deliveries:0};
+      byKey[key].sales+=parseFloat(row[11])||0;
+      byKey[key].units+=parseFloat(row[12])||0;
+      byKey[key].deliveries+=parseFloat(row[10])||0;
+    }
+    for(const v of Object.values(byKey)){if(v.sales>1){v.sales=Math.round(v.sales*100)/100;newProds.push(v);}}
+  }
+
+  return{summary:newSummary,campaigns:newCampaigns,products:newProds.length?newProds:TRACKER_PRODUCTS};
 }
 
-function overviewPanel(){
-  const tot=(ch,i,key)=>rowsOf(ch)[i][key];
-  const n=DATA.instacart.length;
-  const sum=(i,key)=>ORDER.reduce((a,ch)=>a+tot(ch,i,key),0);
-  const lastI=n-1, prevI=n-2;
-  const spend=sum(lastI,'spend'), sales=sum(lastI,'sales'), impr=sum(lastI,'impr'), clicks=sum(lastI,'clicks'), orders=sum(lastI,'orders');
-  const pSpend=sum(prevI,'spend'), pSales=sum(prevI,'sales');
-  const roas= spend? sales/spend:0, pRoas= pSpend? pSales/pSpend:0;
-  const ctr= impr? clicks/impr*100:0;
-  const cards=
-    kpi('Total Spend', usd(spend), delta(spend,pSpend,true))+
-    kpi('Attributed Sales', usd(sales), delta(sales,pSales))+
-    kpi('Blended ROAS', nf(roas,2)+'x', delta(roas,pRoas))+
-    kpi('Impressions', nf(impr), null)+
-    kpi('Clicks', nf(clicks), null)+
-    kpi('Avg CTR', pct(ctr), null);
-  // channel summary table (latest week)
-  const head=`<th class="left">Channel</th><th>Spend</th><th>Sales</th><th>ROAS</th><th>Impr</th><th>Clicks</th><th>CTR</th><th>Orders</th>`;
-  const body=ORDER.map(ch=>{const r=rowsOf(ch)[lastI];
-    return `<tr><td class="left">${CH[ch].name}</td><td>${usd(r.spend)}</td><td>${usd(r.sales)}</td><td>${nf(r.roas,2)}x</td><td>${nf(r.impr)}</td><td>${nf(r.clicks)}</td><td>${pct(r.ctr)}</td><td>${nf(r.orders)}</td></tr>`;}).join('');
-  return `<div class="kpi-row">${cards}</div>
-    <div class="chart-row">
-      <div class="chart-box"><h3>Total Spend vs. Sales (all channels)</h3><canvas id="ov1"></canvas></div>
-      <div class="chart-box"><h3>ROAS by Channel (latest week)</h3><canvas id="ov2"></canvas></div>
-    </div>
-    <div class="section-hd"><h2>Latest Week by Channel</h2><span class="badge">wk ${fwk(DATA.instacart[lastI].wk)}</span></div>
-    <div class="tbl-wrap"><table><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>`;
+/* ---- UPLOAD HANDLER ---- */
+let trackerSummary=TRACKER_SUMMARY;
+let trackerCampaigns=TRACKER_CAMPAIGNS;
+let trackerProducts=TRACKER_PRODUCTS;
+
+function handleUpload(input){
+  const file=input.files[0];if(!file)return;
+  const isXLSX=file.name.toLowerCase().endsWith('.xlsx');
+  if(isXLSX){
+    const reader=new FileReader();
+    reader.onload=e=>{
+      try{
+        const wb=XLSX.read(new Uint8Array(e.target.result),{type:'array',cellDates:true});
+        const hasSum=wb.SheetNames.some(s=>s.trim()==='Summary');
+        if(wb.Sheets['Summary ']||hasSum){
+          const parsed=parseTrackerXLSX(wb);
+          trackerSummary=parsed.summary;trackerCampaigns=parsed.campaigns;trackerProducts=parsed.products;
+          alert(`Tracker loaded: ${Object.keys(parsed.summary).length} months, ${parsed.products.length} product records.`);
+          if(activeTab!=='icip')setTabByName('icip');else renderICIP();
+        } else {
+          alert('Unrecognized XLSX. Expected Monthly Instacart Tracker with "Summary " sheet.');
+        }
+      }catch(err){alert('Could not parse XLSX: '+err.message);}
+    };
+    reader.readAsArrayBuffer(file);
+  }else{
+    const reader=new FileReader();
+    reader.onload=e=>{
+      try{
+        const result=parseCSV(e.target.result,file.name);
+        if(!weekData[result.weekEnd])weekData[result.weekEnd]={};
+        if(result.type==='campaigns')weekData[result.weekEnd].campaigns=result.data;
+        else weekData[result.weekEnd].products=result.data;
+        saveStorage();populateWeekSelector();
+        document.getElementById('weekSel').value=result.weekEnd;
+        if(activeTab==='icip')setTabByName('summary');else render();
+      }catch(err){alert('Could not parse CSV: '+err.message);}
+    };
+    reader.readAsText(file);
+  }
+  input.value='';
 }
-function overviewCharts(){
-  const n=DATA.instacart.length; const labels=DATA.instacart.map(r=>fwk(r.wk));
-  const sumKey=key=>Array.from({length:n},(_,i)=>ORDER.reduce((a,ch)=>a+rowsOf(ch)[i][key],0));
-  charts.push(new Chart(document.getElementById('ov1'),{type:'line',
-    data:{labels,datasets:[
-      {label:'Spend',data:sumKey('spend'),borderColor:'#fd5000',backgroundColor:'#fd500022',tension:.3,fill:true},
-      {label:'Sales',data:sumKey('sales'),borderColor:'#1b69b3',backgroundColor:'#1b69b322',tension:.3,fill:true}]},
-    options:{plugins:{legend:{labels:{boxWidth:12,font:{size:11}}}},scales:{y:{ticks:{callback:v=>'$'+(v/1000)+'k'}}}}}));
-  charts.push(new Chart(document.getElementById('ov2'),{type:'bar',
-    data:{labels:ORDER.map(ch=>CH[ch].name),datasets:[{label:'ROAS',
-      data:ORDER.map(ch=>{const r=rowsOf(ch)[n-1];return r.roas.toFixed(2);}),
-      backgroundColor:ORDER.map(ch=>CH[ch].color)}]},
-    options:{plugins:{legend:{display:false}},scales:{y:{ticks:{callback:v=>v+'x'}}}}}));
+function setTabByName(tab){activeTab=tab;document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===tab));render();}
+
+/* ---- WEEK SELECTOR ---- */
+function populateWeekSelector(){
+  const sel=document.getElementById('weekSel');const cur=sel.value;
+  const weeks=Object.keys(weekData).sort().reverse();
+  sel.innerHTML=weeks.map(w=>`<option value="${w}">${w}</option>`).join('');
+  sel.value=cur&&weekData[cur]?cur:(weeks[0]||'');
+}
+function currentWeek(){return document.getElementById('weekSel').value;}
+function currentWkData(){return weekData[currentWeek()]||{};}
+
+/* ---- UTILS ---- */
+const $=id=>document.getElementById(id);
+const fmt$=n=>'$'+Math.round(n).toLocaleString();
+const fmtD=n=>'$'+n.toFixed(2);
+const fmtK=n=>n>=1e6?(n/1e6).toFixed(1)+'M':n>=1000?(n/1000).toFixed(0)+'K':String(n);
+const fmtR=n=>n.toFixed(2)+'x';
+const fmtP=n=>(n*100).toFixed(2)+'%';
+const fmtC=n=>'$'+n.toFixed(2);
+const rCls=r=>r>=4?'rh':r>=2.5?'rm':'rl';
+const sCls=s=>s==='active'?'#43B02A':s.includes('paused')?'#FF9900':'#9e9e9e';
+
+function shortProd(name){
+  return name
+    .replace(/,\s*Organic French Dessert$/i,'').replace(/,\s*Organic Plant Based Dessert$/i,'')
+    .replace(/Pudding with Organic Dairy$/i,'Pudding').replace(/\bwith 8g of Protein$/i,'(Protein)')
+    .replace(/^Extra Creamy /i,'EC ').replace(/^Plant-Based /i,'PB ').replace(/,\s*Creamy French Dessert$/i,'').trim();
 }
 
-function showTab(name){
+function chg(curr,prev){
+  if(!prev||prev===0)return'';const d=(curr-prev)/prev*100;const sign=d>=0?'+':'';
+  return`<div class="chg ${d>0?'up':d<0?'dn':'neu'}">${sign}${d.toFixed(1)}% vs prior week</div>`;
+}
+function yoyStr(curr,prior,label='YoY'){
+  if(!prior||prior===0)return'';const d=(curr-prior)/prior*100;const sign=d>=0?'+':'';
+  return`<div class="chg ${d>0?'up':d<0?'dn':'neu'}">${sign}${d.toFixed(1)}% ${label}</div>`;
+}
+
+function destroyCharts(){Object.values(chartRefs).forEach(c=>{try{c.destroy();}catch(e){}});chartRefs={};}
+
+function totals(rows){
+  const spend=rows.reduce((s,r)=>s+r.spend,0),sales=rows.reduce((s,r)=>s+r.sales,0),
+    units=rows.reduce((s,r)=>s+r.units,0),impr=rows.reduce((s,r)=>s+r.impr,0),
+    clicks=rows.reduce((s,r)=>s+r.clicks,0),ntb=rows.reduce((s,r)=>s+r.ntb_sales,0);
+  return{spend,sales,units,impr,clicks,ntb,roas:spend?sales/spend:0,
+    ctr:impr?clicks/impr:0,cpc:clicks?spend/clicks:0,ntb_pct:sales?ntb/sales:0};
+}
+function prevTotals(){
+  const weeks=Object.keys(weekData).sort();const cur=currentWeek();const idx=weeks.indexOf(cur);
+  if(idx<=0)return null;const prev=weekData[weeks[idx-1]];if(!prev?.campaigns)return null;
+  return totals(prev.campaigns.filter(c=>c.spend>0));
+}
+function weekBadges(){
+  const weeks=Object.keys(weekData).sort().reverse();if(weeks.length<2)return'';
+  const cur=currentWeek();
+  return`<div class="weeks-loaded">${weeks.map(w=>`<span class="wk-badge ${w===cur?'cur':''}" onclick="document.getElementById('weekSel').value='${w}';render()">${w}</span>`).join('')}</div>`;
+}
+
+/* ---- TAB ROUTING ---- */
+function setTab(tab,el){
+  activeTab=tab;
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-  event.target.classList.add('active');
-  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
-  document.getElementById('panel-'+name).classList.add('active');
-  render(name);
+  if(el)el.classList.add('active');
+  document.getElementById('weekPillWrap').style.display=(tab==='icip')?'none':'';
+  render();
 }
-function render(name){
-  clearCharts();
-  if(name==='overview'){document.getElementById('panel-overview').innerHTML=overviewPanel(); overviewCharts();}
-  else {document.getElementById('panel-'+name).innerHTML=channelPanel(name); channelCharts(name);}
+function render(){
+  destroyCharts();
+  if(activeTab==='icip'){renderICIP();return;}
+  const d=currentWkData();
+  if(!d.campaigns&&!d.products){$('content').innerHTML=`<div class="empty-state">No data for this week. Upload an Instacart CSV.</div>`;return;}
+  if(activeTab==='summary')renderSummary(d);
+  else if(activeTab==='campaigns')renderCampaigns(d);
+  else if(activeTab==='products')renderProducts(d);
+  else renderTrend();
 }
-render('overview');
+
+/* ============================================================  SUMMARY TAB  ============================================================ */
+function renderSummary(d){
+  const active=(d.campaigns||[]).filter(c=>c.spend>0);const t=totals(active);const p=prevTotals();
+  const COLORS=['#fd5000','#1b69b3','#43B02A','#FF9900','#9c27b0','#00838f'];
+  $('content').innerHTML=`
+    ${weekBadges()}
+    ${!d.products?`<div class="notice">Product-level data not loaded. Upload the allproduct CSV.</div>`:''}
+    <div class="kpi-strip">
+      <div class="kpi"><div class="lbl">Total Spend</div><div class="val">${fmt$(t.spend)}</div>${p?chg(t.spend,p.spend):''}</div>
+      <div class="kpi"><div class="lbl">Attributed Sales</div><div class="val ora">${fmt$(t.sales)}</div>${p?chg(t.sales,p.sales):''}</div>
+      <div class="kpi"><div class="lbl">Blended ROAS</div><div class="val ora">${fmtR(t.roas)}</div>${p?chg(t.roas,p.roas):''}</div>
+      <div class="kpi"><div class="lbl">Units Sold</div><div class="val">${Math.round(t.units).toLocaleString()}</div>${p?chg(t.units,p.units):''}</div>
+      <div class="kpi"><div class="lbl">NTB Sales</div><div class="val grn">${fmt$(t.ntb)}</div><div class="sub">${fmtP(t.ntb_pct)} of sales</div></div>
+      <div class="kpi"><div class="lbl">Impressions</div><div class="val">${fmtK(t.impr)}</div>${p?chg(t.impr,p.impr):''}</div>
+    </div>
+    <div class="chart-row">
+      <div class="chart-card"><h3>ROAS by Campaign</h3><div class="chart-wrap"><canvas id="cv-roas"></canvas></div></div>
+      <div class="chart-card"><h3>Spend vs. Attributed Sales</h3><div class="chart-wrap"><canvas id="cv-ss"></canvas></div></div>
+    </div>
+    <div class="chart-row">
+      <div class="chart-card"><h3>New-to-Brand vs. Repeat Sales</h3><div class="chart-wrap"><canvas id="cv-ntb"></canvas></div></div>
+      <div class="chart-card"><h3>Units by Campaign</h3><div class="chart-wrap"><canvas id="cv-units"></canvas></div></div>
+    </div>`;
+  const sorted=[...active].sort((a,b)=>b.sales-a.sales);
+  const labels=sorted.map(c=>c.campaign.length>22?c.campaign.slice(0,20)+'…':c.campaign);
+  setTimeout(()=>{
+    chartRefs.roas=new Chart($('cv-roas'),{type:'bar',data:{labels,datasets:[
+      {label:'ROAS',data:sorted.map(c=>+(c.sales/c.spend).toFixed(2)),backgroundColor:sorted.map((_,i)=>COLORS[i%COLORS.length]+'88'),borderColor:sorted.map((_,i)=>COLORS[i%COLORS.length]),borderWidth:2,borderRadius:4},
+      {label:'4x Target',data:sorted.map(()=>4),type:'line',borderColor:'#bbb',borderDash:[6,3],borderWidth:1.5,pointRadius:0,fill:false},
+    ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{font:{size:11}}}},scales:{y:{beginAtZero:true,ticks:{callback:v=>v+'x'},grid:{color:'#f0f0f0'}}}}});
+    chartRefs.ss=new Chart($('cv-ss'),{type:'bar',data:{labels,datasets:[
+      {label:'Spend',data:sorted.map(c=>c.spend),backgroundColor:'#1b69b330',borderColor:'#1b69b3',borderWidth:2,borderRadius:3},
+      {label:'Sales',data:sorted.map(c=>c.sales),backgroundColor:'#fd500030',borderColor:'#fd5000',borderWidth:2,borderRadius:3},
+    ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{font:{size:11}}}},scales:{y:{beginAtZero:true,ticks:{callback:v=>'$'+v.toLocaleString()},grid:{color:'#f0f0f0'}}}}});
+    chartRefs.ntb=new Chart($('cv-ntb'),{type:'bar',data:{labels,datasets:[
+      {label:'NTB Sales',data:sorted.map(c=>c.ntb_sales),backgroundColor:'#43B02A55',borderColor:'#43B02A',borderWidth:2,borderRadius:3},
+      {label:'Repeat',data:sorted.map(c=>c.sales-c.ntb_sales),backgroundColor:'#1b69b322',borderColor:'#1b69b3',borderWidth:2,borderRadius:3},
+    ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{font:{size:11}}}},scales:{x:{stacked:true},y:{stacked:true,beginAtZero:true,ticks:{callback:v=>'$'+v.toLocaleString()},grid:{color:'#f0f0f0'}}}}});
+    chartRefs.units=new Chart($('cv-units'),{type:'bar',data:{labels,datasets:[{label:'Units',data:sorted.map(c=>Math.round(c.units)),backgroundColor:sorted.map((_,i)=>COLORS[i%COLORS.length]+'66'),borderColor:sorted.map((_,i)=>COLORS[i%COLORS.length]),borderWidth:2,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,grid:{color:'#f0f0f0'}}}}});
+  },50);
+}
+
+/* ============================================================  CAMPAIGNS TAB  ============================================================ */
+function renderCampaigns(d){
+  const rows=[...(d.campaigns||[])].filter(c=>c.spend>0);
+  rows.sort((a,b)=>{let av=a[sortKey]??0,bv=b[sortKey]??0;if(sortKey==='roas'){av=a.spend?a.sales/a.spend:0;bv=b.spend?b.sales/b.spend:0;}if(sortKey==='ctr'){av=a.impr?a.clicks/a.impr:0;bv=b.impr?b.clicks/b.impr:0;}if(sortKey==='cpc'){av=a.clicks?a.spend/a.clicks:0;bv=b.clicks?b.spend/b.clicks:0;}return sortDir*(bv-av);});
+  const H=(label,key,left=false)=>{const a=sortKey===key?(sortDir>0?' ▲':' ▼'):'';return`<th class="${left?'L':''}" onclick="sortCamp('${key}')">${label}${a}</th>`;};
+  $('content').innerHTML=`${weekBadges()}<div class="tbl-card"><div class="tbl-hdr"><h3>All Campaigns — Week ending ${currentWeek()}</h3></div><div class="tbl-wrap"><table><thead><tr>${H('Campaign','campaign',true)}<th class="L nosort">Status</th>${H('Spend','spend')}${H('Sales','sales')}${H('ROAS','roas')}${H('Units','units')}${H('Impressions','impr')}${H('Clicks','clicks')}${H('CTR','ctr')}${H('CPC','cpc')}${H('NTB Sales','ntb_sales')}<th class="nosort">NTB%</th></tr></thead><tbody>${rows.map(r=>{const roas=r.spend?r.sales/r.spend:0;return`<tr><td class="L" style="font-weight:600">${r.campaign}</td><td class="L"><span class="status-dot" style="background:${sCls(r.status)}"></span>${r.status}</td><td>${fmtD(r.spend)}</td><td>${fmtD(r.sales)}</td><td><span class="pill ${rCls(roas)}">${fmtR(roas)}</span></td><td>${Math.round(r.units).toLocaleString()}</td><td>${fmtK(r.impr)}</td><td>${fmtK(r.clicks)}</td><td>${r.impr?fmtP(r.clicks/r.impr):'-'}</td><td>${r.clicks?fmtC(r.spend/r.clicks):'-'}</td><td>${r.ntb_sales>0?fmtD(r.ntb_sales):'-'}</td><td>${r.ntb_pct>0?`${(r.ntb_pct*100).toFixed(1)}%<div class="ntb-bar-wrap"><div class="ntb-bar" style="width:${Math.min(r.ntb_pct*100,100)}%"></div></div>`:'-'}</td></tr>`;}).join('')}</tbody></table></div></div>`;
+}
+function sortCamp(key){if(sortKey===key)sortDir*=-1;else{sortKey=key;sortDir=-1;}renderCampaigns(currentWkData());}
+
+/* ============================================================  BY PRODUCT TAB  ============================================================ */
+function renderProducts(d){
+  if(!d.products||!d.products.length){$('content').innerHTML=`<div class="empty-state">No product data. Upload the allproduct CSV.</div>`;return;}
+  const rows=[...d.products].filter(p=>p.spend>0);
+  rows.sort((a,b)=>{let av=a[prodSortKey]??0,bv=b[prodSortKey]??0;if(prodSortKey==='roas'){av=a.spend?a.sales/a.spend:0;bv=b.spend?b.sales/b.spend:0;}if(prodSortKey==='ctr'){av=a.impr?a.clicks/a.impr:0;bv=b.impr?b.clicks/b.impr:0;}return prodSortDir*(bv-av);});
+  const byProd={};rows.forEach(r=>{const k=r.product;if(!byProd[k])byProd[k]={sales:0,spend:0,units:0};byProd[k].sales+=r.sales;byProd[k].spend+=r.spend;byProd[k].units+=r.units;});
+  const chartItems=Object.entries(byProd).sort((a,b)=>b[1].sales-a[1].sales).slice(0,12);
+  const COLORS=['#fd5000','#1b69b3','#43B02A','#FF9900','#9c27b0','#00838f','#e53935','#546e7a','#f57c00','#388e3c','#7b1fa2','#0288d1'];
+  const H=(label,key,left=false)=>{const a=prodSortKey===key?(prodSortDir>0?' ▲':' ▼'):'';return`<th class="${left?'L':''}" onclick="sortProd('${key}')">${label}${a}</th>`;};
+  $('content').innerHTML=`${weekBadges()}<div class="chart-row single"><div class="chart-card"><h3>Attributed Sales by Product</h3><div class="chart-wrap tall"><canvas id="cv-prod-chart"></canvas></div></div></div><div class="tbl-card"><div class="tbl-hdr"><h3>Product Performance — Week ending ${currentWeek()}</h3></div><div class="tbl-wrap"><table><thead><tr>${H('Product','product',true)}<th class="L nosort">Size</th><th class="L nosort">Campaign</th>${H('Spend','spend')}${H('Sales','sales')}${H('ROAS','roas')}${H('Units','units')}${H('Impressions','impr')}${H('Clicks','clicks')}${H('CTR','ctr')}${H('NTB Sales','ntb_sales')}<th class="nosort">NTB%</th></tr></thead><tbody>${rows.map(r=>{const roas=r.spend?r.sales/r.spend:0;return`<tr><td class="L" style="font-weight:600;max-width:200px">${r.product}</td><td class="L"><span class="size-badge">${r.size}</span></td><td class="L" style="color:var(--g700);font-size:12px">${r.campaign}</td><td>${fmtD(r.spend)}</td><td>${fmtD(r.sales)}</td><td><span class="pill ${rCls(roas)}">${fmtR(roas)}</span></td><td>${Math.round(r.units).toLocaleString()}</td><td>${fmtK(r.impr)}</td><td>${fmtK(r.clicks)}</td><td>${r.impr?fmtP(r.clicks/r.impr):'-'}</td><td>${r.ntb_sales>0?fmtD(r.ntb_sales):'-'}</td><td>${r.ntb_pct>0?`${(r.ntb_pct*100).toFixed(1)}%<div class="ntb-bar-wrap"><div class="ntb-bar" style="width:${Math.min(r.ntb_pct*100,100)}%"></div></div>`:'-'}</td></tr>`;}).join('')}</tbody></table></div></div>`;
+  setTimeout(()=>{chartRefs.prodChart=new Chart($('cv-prod-chart'),{type:'bar',data:{labels:chartItems.map(([k])=>k.length>30?k.slice(0,28)+'…':k),datasets:[{label:'Attributed Sales',data:chartItems.map(([,v])=>v.sales),backgroundColor:chartItems.map((_,i)=>COLORS[i%COLORS.length]+'80'),borderColor:chartItems.map((_,i)=>COLORS[i%COLORS.length]),borderWidth:2,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{display:false}},scales:{x:{beginAtZero:true,ticks:{callback:v=>'$'+v.toLocaleString()},grid:{color:'#f0f0f0'}}}}});},50);
+}
+function sortProd(key){if(prodSortKey===key)prodSortDir*=-1;else{prodSortKey=key;prodSortDir=-1;}renderProducts(currentWkData());}
+
+/* ============================================================  TREND TAB  ============================================================ */
+function renderTrend(){
+  const weeks=Object.keys(weekData).filter(w=>weekData[w].campaigns).sort();
+  if(weeks.length<2){$('content').innerHTML=`<div class="empty-state">Upload at least 2 weeks of campaign data to see trends.</div>`;return;}
+  const wkT=weeks.map(w=>{const active=(weekData[w].campaigns||[]).filter(c=>c.spend>0);return{wk:w,...totals(active)};});
+  const labels=wkT.map(t=>t.wk);
+  $('content').innerHTML=`
+    <div class="chart-row single"><div class="chart-card"><h3>Blended ROAS — Weekly</h3><div class="chart-wrap tall"><canvas id="cv-t-roas"></canvas></div></div></div>
+    <div class="chart-row">
+      <div class="chart-card"><h3>Spend vs. Sales — Weekly</h3><div class="chart-wrap"><canvas id="cv-t-ss"></canvas></div></div>
+      <div class="chart-card"><h3>NTB vs. Repeat Sales — Weekly</h3><div class="chart-wrap"><canvas id="cv-t-ntb"></canvas></div></div>
+    </div>
+    <div class="tbl-card"><div class="tbl-hdr"><h3>Week-by-Week Summary</h3></div><div class="tbl-wrap"><table><thead><tr><th class="L">Week</th><th>Spend</th><th>Sales</th><th>ROAS</th><th>Units</th><th>Impressions</th><th>Clicks</th><th>CTR</th><th>CPC</th><th>NTB Sales</th><th>NTB%</th></tr></thead><tbody>${[...wkT].reverse().map(t=>`<tr><td class="L" style="font-weight:600">${t.wk}</td><td>${fmt$(t.spend)}</td><td>${fmt$(t.sales)}</td><td><span class="pill ${rCls(t.roas)}">${fmtR(t.roas)}</span></td><td>${Math.round(t.units).toLocaleString()}</td><td>${fmtK(t.impr)}</td><td>${fmtK(t.clicks)}</td><td>${fmtP(t.ctr)}</td><td>${fmtC(t.cpc)}</td><td>${fmt$(t.ntb)}</td><td>${fmtP(t.ntb_pct)}</td></tr>`).join('')}</tbody></table></div></div>`;
+  setTimeout(()=>{
+    chartRefs.tRoas=new Chart($('cv-t-roas'),{type:'line',data:{labels,datasets:[{label:'Blended ROAS',data:wkT.map(t=>+t.roas.toFixed(2)),borderColor:'#fd5000',backgroundColor:'#fd500020',fill:true,tension:0.4,pointRadius:6,pointHoverRadius:8},{label:'4x Target',data:labels.map(()=>4),borderColor:'#bbb',borderDash:[6,3],borderWidth:1.5,pointRadius:0,fill:false}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{font:{size:11}}}},scales:{y:{beginAtZero:false,ticks:{callback:v=>v+'x'},grid:{color:'#f0f0f0'}}}}});
+    chartRefs.tSS=new Chart($('cv-t-ss'),{type:'bar',data:{labels,datasets:[{label:'Spend',data:wkT.map(t=>t.spend),backgroundColor:'#1b69b330',borderColor:'#1b69b3',borderWidth:2,borderRadius:3},{label:'Sales',data:wkT.map(t=>t.sales),backgroundColor:'#fd500030',borderColor:'#fd5000',borderWidth:2,borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{font:{size:11}}}},scales:{y:{beginAtZero:true,ticks:{callback:v=>'$'+v.toLocaleString()},grid:{color:'#f0f0f0'}}}}});
+    chartRefs.tNTB=new Chart($('cv-t-ntb'),{type:'bar',data:{labels,datasets:[{label:'NTB Sales',data:wkT.map(t=>t.ntb),backgroundColor:'#43B02A55',borderColor:'#43B02A',borderWidth:2,borderRadius:3},{label:'Repeat Sales',data:wkT.map(t=>t.sales-t.ntb),backgroundColor:'#1b69b322',borderColor:'#1b69b3',borderWidth:2,borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{font:{size:11}}}},scales:{x:{stacked:true},y:{stacked:true,beginAtZero:true,ticks:{callback:v=>'$'+v.toLocaleString()},grid:{color:'#f0f0f0'}}}}});
+  },50);
+}
+
+/* ============================================================
+   ICIP TAB — Total Platform Sales (from Monthly Tracker)
+   ============================================================ */
+function renderICIP(){
+  const MO_NAMES=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const allMonths=['01','02','03','04','05','06','07','08','09','10','11','12'];
+
+  // Build yearly series from tracker summary
+  const byYr={};
+  Object.values(trackerSummary).forEach(v=>{
+    const yr=String(v.year);const mm=v.month.slice(5);
+    if(!byYr[yr])byYr[yr]={};
+    byYr[yr][mm]={sales:v.sales||0,spend:v.sp_spend||0,units:v.units||0,
+      attr_units:v.attr_units||0,org_units:v.org_units||0,arp:v.arp||0};
+  });
+
+  // YTD 2026 (months available)
+  const months2026=Object.keys(byYr['2026']||{}).sort();
+  const ytd2026=months2026.reduce((s,mm)=>s+(byYr['2026'][mm]?.sales||0),0);
+  const ytd2025comp=months2026.reduce((s,mm)=>s+(byYr['2025']?.[mm]?.sales||0),0);
+  const ytdSpend2026=months2026.reduce((s,mm)=>s+(byYr['2026'][mm]?.spend||0),0);
+  const latest2026=months2026[months2026.length-1];
+  const latestData=byYr['2026']?.[latest2026]||{};
+  const attrPct=latestData.units?(latestData.attr_units/latestData.units):0;
+
+  // Product month selector
+  const availMonths=[...new Set(trackerProducts.map(p=>p.month))].sort().reverse();
+  if(!icipProdMonth||!availMonths.includes(icipProdMonth))icipProdMonth=availMonths[0]||'';
+  const selProds=trackerProducts.filter(p=>p.month===icipProdMonth).sort((a,b)=>b.sales-a.sales);
+  const grandTot=selProds.reduce((s,p)=>s+p.sales,0);
+
+  // Campaign history months
+  const campMonths=Object.keys((trackerCampaigns['Paper cups']||{})).sort();
+  const CAMP_NAMES=Object.keys(trackerCampaigns);
+
+  const HP=(label,key,left=false)=>{const a=icipSortKey===key?(icipSortDir>0?' ▲':' ▼'):'';return`<th class="${left?'L':''}" onclick="sortICIP('${key}')">${label}${a}</th>`;};
+  const sortedProds=[...selProds].sort((a,b)=>{
+    let av=a[icipSortKey]||0,bv=b[icipSortKey]||0;
+    if(icipSortKey==='arp'){av=a.units?a.sales/a.units:0;bv=b.units?b.sales/b.units:0;}
+    return icipSortDir*(bv-av);
+  });
+
+  $('content').innerHTML=`
+    <div class="icip-note">ICIP = total Instacart platform sales (organic + ad-attributed). Data from Monthly Instacart Tracker. Upload a new tracker .xlsx to refresh.</div>
+
+    <div class="kpi-strip">
+      <div class="kpi">
+        <div class="lbl">2026 YTD Sales (Jan–${MO_NAMES[parseInt(latest2026)-1]})</div>
+        <div class="val ora">${fmt$(ytd2026)}</div>
+        ${yoyStr(ytd2026,ytd2025comp,'vs 2025')}
+      </div>
+      <div class="kpi">
+        <div class="lbl">2025 YTD Jan–${MO_NAMES[parseInt(latest2026)-1]}</div>
+        <div class="val">${fmt$(ytd2025comp)}</div>
+        <div class="sub">2025 Full Year: ${fmt$(Object.values(byYr['2025']||{}).reduce((s,v)=>s+v.sales,0))}</div>
+      </div>
+      <div class="kpi">
+        <div class="lbl">2026 YTD Ad Spend</div>
+        <div class="val blu">${fmt$(ytdSpend2026)}</div>
+        <div class="sub">${ytd2026?((ytdSpend2026/ytd2026)*100).toFixed(1)+'% of total sales':''}</div>
+      </div>
+      <div class="kpi">
+        <div class="lbl">${latest2026.replace('-','/')} Total Sales</div>
+        <div class="val">${fmt$(latestData.sales||0)}</div>
+        ${byYr['2025']?.[latest2026]?yoyStr(latestData.sales,byYr['2025'][latest2026].sales,'vs 2025'):''}
+      </div>
+      <div class="kpi">
+        <div class="lbl">${latest2026.replace('-','/')} ARP</div>
+        <div class="val">${latestData.arp?'$'+latestData.arp.toFixed(2):'-'}</div>
+        ${byYr['2025']?.[latest2026]?.arp?yoyStr(latestData.arp,byYr['2025'][latest2026].arp,'vs 2025'):''}
+      </div>
+      <div class="kpi">
+        <div class="lbl">${latest2026.replace('-','/')} Attributed %</div>
+        <div class="val grn">${attrPct?(attrPct*100).toFixed(1)+'%':'-'}</div>
+        <div class="sub">of total units from ads</div>
+      </div>
+    </div>
+
+    <div class="chart-row single">
+      <div class="chart-card">
+        <h3>Monthly Total Sales — <span class="yr-2024">2024</span> vs <span class="yr-2025">2025</span> vs <span class="yr-2026">2026</span></h3>
+        <div class="chart-wrap xtall"><canvas id="cv-ic-trend"></canvas></div>
+      </div>
+    </div>
+
+    <div class="chart-row">
+      <div class="chart-card">
+        <h3>2026: Total Sales vs Ad Spend by Month</h3>
+        <div class="chart-wrap"><canvas id="cv-ic-spend"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h3>2026: Attributed vs Organic Units</h3>
+        <div class="chart-wrap"><canvas id="cv-ic-units"></canvas></div>
+      </div>
+    </div>
+
+    <div class="chart-row">
+      ${CAMP_NAMES.map((cn,ci)=>`<div class="chart-card">
+        <h3>${cn} — Monthly Attributed Sales (2025)</h3>
+        <div class="chart-wrap"><canvas id="cv-camp-${ci}"></canvas></div>
+      </div>`).join('')}
+    </div>
+
+    <div class="section-sep">Product Detail by Month</div>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap">
+      <label style="font-size:12px;font-weight:700;color:var(--g700)">Month:</label>
+      <select class="month-sel" onchange="icipProdMonth=this.value;renderICIP()">
+        ${availMonths.map(m=>`<option value="${m}" ${m===icipProdMonth?'selected':''}>${m}</option>`).join('')}
+      </select>
+      <span style="font-size:12px;color:var(--g500)">${sortedProds.length} SKUs — ${fmt$(grandTot)} total</span>
+    </div>
+
+    ${sortedProds.length?`
+    <div class="chart-row single">
+      <div class="chart-card">
+        <h3>Total Sales by Product — ${icipProdMonth}</h3>
+        <div class="chart-wrap xtall"><canvas id="cv-ic-prod"></canvas></div>
+      </div>
+    </div>
+    <div class="tbl-card">
+      <div class="tbl-hdr"><h3>Product Sales — ${icipProdMonth} (All Instacart)</h3></div>
+      <div class="tbl-wrap"><table>
+        <thead><tr>
+          ${HP('Product','sales',true)}
+          <th class="L nosort">Size</th>
+          ${HP('Total Sales','sales')}${HP('Units','units')}${HP('Deliveries','deliveries')}${HP('ARP','arp')}
+          <th class="nosort">Share</th>
+        </tr></thead>
+        <tbody>${(()=>{
+          const PCOLS=['#fd5000','#1b69b3','#43B02A','#FF9900','#9c27b0','#00838f','#e53935','#546e7a','#f57c00','#388e3c','#7b1fa2','#0288d1','#6d4c41','#00acc1','#558b2f'];
+          return sortedProds.map((p,i)=>{
+            const arpVal=p.units?p.sales/p.units:0;
+            const pct=grandTot?p.sales/grandTot:0;
+            return`<tr>
+              <td class="L" style="font-weight:600">${shortProd(p.product)}</td>
+              <td class="L"><span class="size-badge">${p.size}</span></td>
+              <td style="font-weight:600">${fmt$(p.sales)}</td>
+              <td>${Math.round(p.units).toLocaleString()}</td>
+              <td>${Math.round(p.deliveries).toLocaleString()}</td>
+              <td>${arpVal?'$'+arpVal.toFixed(2):'-'}</td>
+              <td><div style="display:flex;align-items:center;gap:6px;justify-content:flex-end">
+                <span style="font-size:12px;color:var(--g700);min-width:34px">${(pct*100).toFixed(1)}%</span>
+                <div style="width:70px;background:var(--g200);border-radius:3px;height:6px">
+                  <div style="width:${Math.min(pct*100,100)}%;height:6px;border-radius:3px;background:${PCOLS[i%PCOLS.length]}"></div>
+                </div>
+              </div></td>
+            </tr>`;
+          }).join('');
+        })()}</tbody>
+      </table></div>
+    </div>`:'<div class="notice">No product data for this month.</div>'}`;
+
+  // Draw charts
+  const mo26=allMonths.map(mm=>byYr['2026']?.[mm]?.sales||null);
+  const mo25=allMonths.map(mm=>byYr['2025']?.[mm]?.sales||null);
+  const mo24=allMonths.map(mm=>byYr['2024']?.[mm]?.sales||null);
+  const spendMo=months2026.map(mm=>byYr['2026'][mm]?.spend||0);
+  const salesMo=months2026.map(mm=>byYr['2026'][mm]?.sales||0);
+  const attrMo=months2026.map(mm=>byYr['2026'][mm]?.attr_units||0);
+  const orgMo=months2026.map(mm=>byYr['2026'][mm]?.org_units||0);
+  const moLabels26=months2026.map(mm=>MO_NAMES[parseInt(mm)-1]);
+
+  setTimeout(()=>{
+    // 3-year trend
+    chartRefs.icTrend=new Chart($('cv-ic-trend'),{type:'bar',data:{labels:MO_NAMES,datasets:[
+      {label:'2024',data:mo24,backgroundColor:'#9e9e9e33',borderColor:'#9e9e9e',borderWidth:2,borderRadius:3},
+      {label:'2025',data:mo25,backgroundColor:'#1b69b333',borderColor:'#1b69b3',borderWidth:2,borderRadius:3},
+      {label:'2026',data:mo26,backgroundColor:'#fd500055',borderColor:'#fd5000',borderWidth:2,borderRadius:3},
+    ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{font:{size:11}}}},
+      scales:{y:{beginAtZero:true,ticks:{callback:v=>'$'+Math.round(v/1000)+'K'},grid:{color:'#f0f0f0'}}}}});
+
+    // Spend vs sales
+    chartRefs.icSpend=new Chart($('cv-ic-spend'),{type:'bar',data:{labels:moLabels26,datasets:[
+      {label:'Total Sales',data:salesMo,backgroundColor:'#fd500033',borderColor:'#fd5000',borderWidth:2,borderRadius:3,order:2},
+      {label:'Ad Spend',data:spendMo,backgroundColor:'#1b69b355',borderColor:'#1b69b3',borderWidth:2,borderRadius:3,order:2},
+    ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{font:{size:11}}}},
+      scales:{y:{beginAtZero:true,ticks:{callback:v=>'$'+Math.round(v/1000)+'K'},grid:{color:'#f0f0f0'}}}}});
+
+    // Attr vs organic units
+    chartRefs.icUnits=new Chart($('cv-ic-units'),{type:'bar',data:{labels:moLabels26,datasets:[
+      {label:'Attributed',data:attrMo,backgroundColor:'#fd500055',borderColor:'#fd5000',borderWidth:2,borderRadius:3},
+      {label:'Organic',data:orgMo,backgroundColor:'#43B02A44',borderColor:'#43B02A',borderWidth:2,borderRadius:3},
+    ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{font:{size:11}}}},
+      scales:{x:{stacked:true},y:{stacked:true,beginAtZero:true,grid:{color:'#f0f0f0'}}}}});
+
+    // Campaign charts
+    CAMP_NAMES.forEach((cn,ci)=>{
+      const el=$(`cv-camp-${ci}`);if(!el)return;
+      const campData=trackerCampaigns[cn]||{};
+      const cMonths=Object.keys(campData).sort();
+      const cLabels=cMonths.map(mm=>MO_NAMES[parseInt(mm)-1]);
+      chartRefs[`camp${ci}`]=new Chart(el,{type:'bar',data:{labels:cLabels,datasets:[
+        {label:'Attributed Sales',data:cMonths.map(mm=>campData[mm]?.sales||0),backgroundColor:ci===0?'#1b69b333':'#fd500033',borderColor:ci===0?'#1b69b3':'#fd5000',borderWidth:2,borderRadius:3},
+        {label:'Spend',data:cMonths.map(mm=>campData[mm]?.spend||0),backgroundColor:'#43B02A33',borderColor:'#43B02A',borderWidth:2,borderRadius:3},
+      ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{font:{size:11}}}},
+        scales:{y:{beginAtZero:true,ticks:{callback:v=>'$'+Math.round(v/1000)+'K'},grid:{color:'#f0f0f0'}}}}});
+    });
+
+    // Product chart
+    if($('cv-ic-prod')){
+      const top12=sortedProds.slice(0,12);
+      const PCOLS=['#fd5000','#1b69b3','#43B02A','#FF9900','#9c27b0','#00838f','#e53935','#546e7a','#f57c00','#388e3c','#7b1fa2','#0288d1'];
+      chartRefs.icProd=new Chart($('cv-ic-prod'),{type:'bar',data:{
+        labels:top12.map(p=>{const n=shortProd(p.product)+' '+p.size;return n.length>36?n.slice(0,34)+'…':n;}),
+        datasets:[{label:'Total Sales',data:top12.map(p=>p.sales),
+          backgroundColor:PCOLS.map(c=>c+'80'),borderColor:PCOLS,borderWidth:2,borderRadius:4}]
+      },options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{display:false}},
+        scales:{x:{beginAtZero:true,ticks:{callback:v=>'$'+v.toLocaleString()},grid:{color:'#f0f0f0'}}}}});
+    }
+  },50);
+}
+function sortICIP(key){if(icipSortKey===key)icipSortDir*=-1;else{icipSortKey=key;icipSortDir=-1;}renderICIP();}
+
+/* ---- INIT ---- */
+loadStorage();
+populateWeekSelector();
+document.querySelectorAll('.tab').forEach(el=>el.classList.toggle('active',el.dataset.tab===activeTab));
+render();
 </script>
 </body>
 </html>
