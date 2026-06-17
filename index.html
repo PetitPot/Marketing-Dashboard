@@ -468,7 +468,7 @@ function sortCamp(key){if(sortKey===key)sortDir*=-1;else{sortKey=key;sortDir=-1;
 /* ============================================================  BY PRODUCT  ============================================================ */
 function renderProducts(d){
   if(!d.products||!d.products.length){$('content').innerHTML=`<div class="empty-state">No product data for this week.</div>`;return;}
-  const rows=[...d.products].filter(p=>p.spend>0);
+  const rows=[...d.products].filter(p=>p.spend>0&&p.sales>=20);
   rows.sort((a,b)=>{let av=a[prodSortKey]??0,bv=b[prodSortKey]??0;
     if(prodSortKey==='roas'){av=a.spend?a.sales/a.spend:0;bv=b.spend?b.sales/b.spend:0;}
     if(prodSortKey==='ctr'){av=a.impr?a.clicks/a.impr:0;bv=b.impr?b.clicks/b.impr:0;}
