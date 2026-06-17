@@ -357,10 +357,51 @@ const fmtP=n=>(n*100).toFixed(2)+'%';
 const fmtC=n=>'$'+n.toFixed(2);
 const rCls=r=>r>=4?'rh':r>=2.5?'rm':'rl';
 const sCls=s=>s==='active'?'#43B02A':s.includes('paused')?'#FF9900':'#9e9e9e';
+/* ---- PRODUCT NAME + FORMAT LOOKUP ---- */
+const PROD_NAME_MAP={
+  "extra creamy tapioca pudding|14 oz":"Tapioca 14oz","tapioca pudding|14 oz":"Tapioca 14oz",
+  "extra creamy rice pudding|14 oz":"Rice Pudding 14oz",
+  "extra creamy chocolate french pudding|14 oz":"Chocolate 14oz","extra creamy vanilla french pudding|14 oz":"Vanilla 14oz",
+  "extra creamy chocolate pudding with 8g of protein|14 oz":"4pk Chocolate Protein","extra creamy chocolate pudding with 8g of protein|4 x 14 oz":"4pk Chocolate Protein",
+  "extra creamy strawberry pudding with 8g of protein|14 oz":"4pk Strawberry Protein","extra creamy strawberry pudding with 8g of protein|4 x 14 oz":"4pk Strawberry Protein",
+  "vanilla bean, organic french dessert|4 oz":"Vanilla 2ct Glass","vanilla bean, organic french dessert|2 x 4 oz":"Vanilla 2ct Glass",
+  "vanilla rice pudding, organic french dessert|4 oz":"Rice Pudding 2ct Glass","vanilla rice pudding, organic french dessert|2 x 4 oz":"Rice Pudding 2ct Glass",
+  "dark chocolate, organic french dessert|4 oz":"Chocolate 2ct Glass","dark chocolate, organic french dessert|2 x 4 oz":"Chocolate 2ct Glass",
+  "pistachio, organic french dessert|4 oz":"Pistachio 2ct Glass","pistachio, organic french dessert|2 x 4 oz":"Pistachio 2ct Glass","pistachio, organic french dessert|each":"Pistachio 2ct Glass",
+  "plant-based oatmilk chocolate, organic french dessert|4 oz":"Chocolate Oat 2ct Glass","plant-based oatmilk chocolate, organic french dessert|2 x 4 oz":"Chocolate Oat 2ct Glass",
+  "plant-based vanilla rice pudding, organic plant based dessert|4 oz":"Vegan Rice 2ct Glass","plant-based vanilla rice pudding, organic plant based dessert|2 x 4 oz":"Vegan Rice 2ct Glass",
+  "creme brulee, creamy french dessert|2 x 3.5 oz":"Creme Brulee 2ct Glass",
+  "extra creamy chocolate french pudding|3.5 oz":"Chocolate 2ct Paper","extra creamy chocolate french pudding|2 x 3.5 oz":"Chocolate 2ct Paper",
+  "extra creamy vanilla french pudding|3.5 oz":"Vanilla 2ct Paper","extra creamy vanilla french pudding|2 x 3.5 oz":"Vanilla 2ct Paper",
+  "extra creamy rice pudding|3.5 oz":"Rice Pudding 2ct Paper","extra creamy rice pudding|2 x 3.5 oz":"Rice Pudding 2ct Paper",
+  "dark chocolate pint, organic french dessert|14 oz":"Org Chocolate 14oz",
+  "rice pudding pint, organic french dessert|14 oz":"Org Rice Pudding 14oz",
+  "organic dark chocolate french pudding|2 x 3.5 oz":"Org Chocolate 2ct Glass",
+  "vanilla bean, creamy french dessert|2 x 3.5 oz":"Vanilla 2ct Glass","vanilla bean, creamy french dessert|7 oz":"Vanilla 2ct Glass",
+  "tapioca pudding with organic dairy|6 x 24 oz":"Tapioca 6ct Glass","tapioca pudding with organic dairy|24 oz":"Tapioca 6ct Glass",
+  "vanilla bean, organic french dessert|8 oz":"Vanilla 2ct Glass","dark chocolate, organic french dessert|8 oz":"Chocolate 2ct Glass",
+};
+const PROD_FORMAT_MAP={
+  "Tapioca 14oz":"Conv Pints","Rice Pudding 14oz":"Conv Pints","Chocolate 14oz":"Conv Pints","Vanilla 14oz":"Conv Pints",
+  "4pk Chocolate Protein":"Protein","4pk Strawberry Protein":"Protein","2pk Chocolate Protein":"Protein","2pk Strawberry Protein":"Protein",
+  "Vanilla 2ct Glass":"2ct Glass","Rice Pudding 2ct Glass":"2ct Glass","Chocolate 2ct Glass":"2ct Glass",
+  "Pistachio 2ct Glass":"2ct Glass","Chocolate Oat 2ct Glass":"2ct Glass","Vegan Rice 2ct Glass":"2ct Glass","Creme Brulee 2ct Glass":"2ct Glass","Org Chocolate 2ct Glass":"2ct Glass",
+  "Chocolate 2ct Paper":"Paper Cup","Vanilla 2ct Paper":"Paper Cup","Rice Pudding 2ct Paper":"Paper Cup","Pistachio 2ct Paper":"Paper Cup",
+  "Org Chocolate 14oz":"Org Pints","Org Rice Pudding 14oz":"Org Pints","Org Tapioca 14oz":"Org Pints",
+  "Tapioca 6ct Glass":"Club","Vanilla 6ct Glass":"Club","Chocolate 6ct Glass":"Club","Pistachio 6ct Glass":"Club","Flan 6ct Glass":"Club","Rice Pudding 6ct Glass":"Club","Mango Tapioca 6ct Glass":"Club","Matcha Tapioca 6ct Glass":"Club",
+};
+const FORMAT_COLORS={"Conv Pints":"#fd5000","Protein":"#43B02A","2ct Glass":"#1b69b3","Paper Cup":"#FF9900","Org Pints":"#9c27b0","Club":"#00838f"};
+function displayProd(name,size){
+  const key=(name+'|'+size).toLowerCase();
+  return PROD_NAME_MAP[key]||shortProd(name);
+}
+function prodFormat(name,size){
+  return PROD_FORMAT_MAP[displayProd(name,size)]||'Other';
+}
 function shortProd(name){
   return name.replace(/,\s*Organic French Dessert$/i,'').replace(/,\s*Organic Plant Based Dessert$/i,'')
     .replace(/Pudding with Organic Dairy$/i,'Pudding').replace(/\bwith 8g of Protein$/i,'(Protein)')
-    .replace(/^Extra Creamy /i,'EC ').replace(/^Plant-Based /i,'PB ').replace(/,\s*Creamy French Dessert$/i,'').trim();
+    .replace(/^Extra Creamy /i,'').replace(/^Plant-Based /i,'PB ').replace(/,\s*Creamy French Dessert$/i,'').trim();
 }
 function chg(curr,prev){
   if(!prev||prev===0)return'';const d=(curr-prev)/prev*100;const sign=d>=0?'+':'';
@@ -473,12 +514,11 @@ function renderProducts(d){
     if(prodSortKey==='roas'){av=a.spend?a.sales/a.spend:0;bv=b.spend?b.sales/b.spend:0;}
     if(prodSortKey==='ctr'){av=a.impr?a.clicks/a.impr:0;bv=b.impr?b.clicks/b.impr:0;}
     return prodSortDir*(bv-av);});
-  const byProd={};rows.forEach(r=>{const k=r.product;if(!byProd[k])byProd[k]={sales:0,spend:0};byProd[k].sales+=r.sales;byProd[k].spend+=r.spend;});
-  const chartItems=Object.entries(byProd).sort((a,b)=>b[1].sales-a[1].sales).slice(0,12);
-  const COLORS=['#fd5000','#1b69b3','#43B02A','#FF9900','#9c27b0','#00838f','#e53935','#546e7a','#f57c00','#388e3c','#7b1fa2','#0288d1'];
+  const byProd={};rows.forEach(r=>{const dn=displayProd(r.product,r.size);const fmt=prodFormat(r.product,r.size);if(!byProd[dn])byProd[dn]={sales:0,spend:0,fmt};byProd[dn].sales+=r.sales;byProd[dn].spend+=r.spend;});
+  const chartItems=Object.entries(byProd).sort((a,b)=>b[1].sales-a[1].sales).slice(0,14);
   const H=(label,key,left=false)=>{const a=prodSortKey===key?(prodSortDir>0?' ▲':' ▼'):'';return`<th class="${left?'L':''}" onclick="sortProd('${key}')">${label}${a}</th>`;};
-  $('content').innerHTML=`${weekBadges()}<div class="chart-row single"><div class="chart-card"><h3>Attributed Sales by Product — ${fmtWeekLabel(currentWeek())}</h3><div class="chart-wrap tall"><canvas id="cv-prod-chart"></canvas></div></div></div><div class="tbl-card"><div class="tbl-hdr"><h3>Products — ${fmtWeekLabel(currentWeek())}</h3></div><div class="tbl-wrap"><table><thead><tr>${H('Product','product',true)}<th class="L nosort">Size</th><th class="L nosort">Campaign</th>${H('Spend','spend')}${H('Sales','sales')}${H('ROAS','roas')}${H('Units','units')}${H('Impressions','impr')}${H('Clicks','clicks')}${H('CTR','ctr')}${H('NTB Sales','ntb_sales')}<th class="nosort">NTB%</th></tr></thead><tbody>${rows.map(r=>{const roas=r.spend?r.sales/r.spend:0;return`<tr><td class="L" style="font-weight:600;max-width:200px">${r.product}</td><td class="L"><span class="size-badge">${r.size}</span></td><td class="L" style="color:var(--g700);font-size:12px">${r.campaign}</td><td>${fmtD(r.spend)}</td><td>${fmtD(r.sales)}</td><td><span class="pill ${rCls(roas)}">${fmtR(roas)}</span></td><td>${Math.round(r.units).toLocaleString()}</td><td>${fmtK(r.impr)}</td><td>${fmtK(r.clicks)}</td><td>${r.impr?fmtP(r.clicks/r.impr):'-'}</td><td>${r.ntb_sales>0?fmtD(r.ntb_sales):'-'}</td><td>${r.ntb_pct>0?`${(r.ntb_pct*100).toFixed(1)}%<div class="ntb-bar-wrap"><div class="ntb-bar" style="width:${Math.min(r.ntb_pct*100,100)}%"></div></div>`:'-'}</td></tr>`;}).join('')}</tbody></table></div></div>`;
-  setTimeout(()=>{chartRefs.prodChart=new Chart($('cv-prod-chart'),{type:'bar',data:{labels:chartItems.map(([k])=>k.length>30?k.slice(0,28)+'…':k),datasets:[{label:'Attributed Sales',data:chartItems.map(([,v])=>v.sales),backgroundColor:chartItems.map((_,i)=>COLORS[i%COLORS.length]+'80'),borderColor:chartItems.map((_,i)=>COLORS[i%COLORS.length]),borderWidth:2,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{display:false}},scales:{x:{beginAtZero:true,ticks:{callback:v=>'$'+v.toLocaleString()},grid:{color:'#f0f0f0'}}}}});},50);
+  $('content').innerHTML=`${weekBadges()}<div class="chart-row single"><div class="chart-card"><h3>Attributed Sales by Product — ${fmtWeekLabel(currentWeek())}</h3><div class="chart-wrap tall"><canvas id="cv-prod-chart"></canvas></div></div></div><div class="tbl-card"><div class="tbl-hdr"><h3>Products — ${fmtWeekLabel(currentWeek())}</h3></div><div class="tbl-wrap"><table><thead><tr>${H('Product','product',true)}<th class="L nosort">Format</th><th class="L nosort">Campaign</th>${H('Spend','spend')}${H('Sales','sales')}${H('ROAS','roas')}${H('Units','units')}${H('Impressions','impr')}${H('Clicks','clicks')}${H('CTR','ctr')}${H('NTB Sales','ntb_sales')}<th class="nosort">NTB%</th></tr></thead><tbody>${rows.map(r=>{const roas=r.spend?r.sales/r.spend:0;const dn=displayProd(r.product,r.size);const fmt=prodFormat(r.product,r.size);const fmtClr=FORMAT_COLORS[fmt]||'#9e9e9e';return`<tr><td class="L" style="font-weight:700">${dn}</td><td class="L"><span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;background:${fmtClr}18;color:${fmtClr};border:1px solid ${fmtClr}44">${fmt}</span></td><td class="L" style="color:var(--g700);font-size:12px">${r.campaign}</td><td>${fmtD(r.spend)}</td><td>${fmtD(r.sales)}</td><td><span class="pill ${rCls(roas)}">${fmtR(roas)}</span></td><td>${Math.round(r.units).toLocaleString()}</td><td>${fmtK(r.impr)}</td><td>${fmtK(r.clicks)}</td><td>${r.impr?fmtP(r.clicks/r.impr):'-'}</td><td>${r.ntb_sales>0?fmtD(r.ntb_sales):'-'}</td><td>${r.ntb_pct>0?`${(r.ntb_pct*100).toFixed(1)}%<div class="ntb-bar-wrap"><div class="ntb-bar" style="width:${Math.min(r.ntb_pct*100,100)}%"></div></div>`:'-'}</td></tr>`;}).join('')}</tbody></table></div></div>`;
+  setTimeout(()=>{chartRefs.prodChart=new Chart($('cv-prod-chart'),{type:'bar',data:{labels:chartItems.map(([k])=>k),datasets:[{label:'Attributed Sales',data:chartItems.map(([,v])=>v.sales),backgroundColor:chartItems.map(([,v])=>(FORMAT_COLORS[v.fmt]||'#9e9e9e')+'80'),borderColor:chartItems.map(([,v])=>FORMAT_COLORS[v.fmt]||'#9e9e9e'),borderWidth:2,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{display:false}},scales:{x:{beginAtZero:true,ticks:{callback:v=>'$'+v.toLocaleString()},grid:{color:'#f0f0f0'}}}}});},50);
 }
 function sortProd(key){if(prodSortKey===key)prodSortDir*=-1;else{prodSortKey=key;prodSortDir=-1;}renderProducts(currentWkData());}
 
@@ -577,7 +617,7 @@ function renderICIP(){
       <span style="font-size:12px;color:var(--g500)">${sortedProds.length} SKUs — ${fmt$(grandTot)} total</span>
     </div>
     ${sortedProds.length?`<div class="chart-row single"><div class="chart-card"><h3>Total Sales by Product — ${icipProdMonth}</h3><div class="chart-wrap xtall"><canvas id="cv-ic-prod"></canvas></div></div></div>
-    <div class="tbl-card"><div class="tbl-hdr"><h3>Product Sales — ${icipProdMonth}</h3></div><div class="tbl-wrap"><table><thead><tr>${HP('Product','sales',true)}<th class="L nosort">Size</th>${HP('Total Sales','sales')}${HP('Units','units')}${HP('Deliveries','deliveries')}${HP('ARP','arp')}<th class="nosort">Share</th></tr></thead><tbody>${(()=>{const PCOLS=['#fd5000','#1b69b3','#43B02A','#FF9900','#9c27b0','#00838f','#e53935','#546e7a','#f57c00','#388e3c','#7b1fa2','#0288d1'];return sortedProds.map((p,i)=>{const arpVal=p.units?p.sales/p.units:0;const pct=grandTot?p.sales/grandTot:0;return`<tr><td class="L" style="font-weight:600">${shortProd(p.product)}</td><td class="L"><span class="size-badge">${p.size}</span></td><td style="font-weight:600">${fmt$(p.sales)}</td><td>${Math.round(p.units).toLocaleString()}</td><td>${Math.round(p.deliveries).toLocaleString()}</td><td>${arpVal?'$'+arpVal.toFixed(2):'-'}</td><td><div style="display:flex;align-items:center;gap:6px;justify-content:flex-end"><span style="font-size:12px;color:var(--g700);min-width:34px">${(pct*100).toFixed(1)}%</span><div style="width:70px;background:var(--g200);border-radius:3px;height:6px"><div style="width:${Math.min(pct*100,100)}%;height:6px;border-radius:3px;background:${PCOLS[i%PCOLS.length]}"></div></div></div></td></tr>`;}).join('');})()}</tbody></table></div></div>`:'<div class="notice">No product data for this month.</div>'}`;
+    <div class="tbl-card"><div class="tbl-hdr"><h3>Product Sales — ${icipProdMonth}</h3></div><div class="tbl-wrap"><table><thead><tr>${HP('Product','sales',true)}<th class="L nosort">Size</th>${HP('Total Sales','sales')}${HP('Units','units')}${HP('Deliveries','deliveries')}${HP('ARP','arp')}<th class="nosort">Share</th></tr></thead><tbody>${(()=>{const PCOLS=['#fd5000','#1b69b3','#43B02A','#FF9900','#9c27b0','#00838f','#e53935','#546e7a','#f57c00','#388e3c','#7b1fa2','#0288d1'];return sortedProds.map((p,i)=>{const arpVal=p.units?p.sales/p.units:0;const pct=grandTot?p.sales/grandTot:0;return`<tr><td class="L" style="font-weight:600">${displayProd(p.product, p.size)}</td><td class="L"><span class="size-badge">${p.size}</span></td><td style="font-weight:600">${fmt$(p.sales)}</td><td>${Math.round(p.units).toLocaleString()}</td><td>${Math.round(p.deliveries).toLocaleString()}</td><td>${arpVal?'$'+arpVal.toFixed(2):'-'}</td><td><div style="display:flex;align-items:center;gap:6px;justify-content:flex-end"><span style="font-size:12px;color:var(--g700);min-width:34px">${(pct*100).toFixed(1)}%</span><div style="width:70px;background:var(--g200);border-radius:3px;height:6px"><div style="width:${Math.min(pct*100,100)}%;height:6px;border-radius:3px;background:${PCOLS[i%PCOLS.length]}"></div></div></div></td></tr>`;}).join('');})()}</tbody></table></div></div>`:'<div class="notice">No product data for this month.</div>'}`;
 
   const mo26=allMonths.map(mm=>byYr['2026']?.[mm]?.sales||null);
   const mo25=allMonths.map(mm=>byYr['2025']?.[mm]?.sales||null);
@@ -615,7 +655,7 @@ function renderICIP(){
     });
     if($('cv-ic-prod')&&topProds.length){
       chartRefs.icProd=new Chart($('cv-ic-prod'),{type:'bar',data:{
-        labels:topProds.map(p=>{const n=shortProd(p.product)+' '+p.size;return n.length>36?n.slice(0,34)+'…':n;}),
+        labels:topProds.map(p=>displayProd(p.product,p.size)),
         datasets:[{label:'Total Sales',data:topProds.map(p=>p.sales),backgroundColor:PCOLS.map(c=>c+'80'),borderColor:PCOLS,borderWidth:2,borderRadius:4}]
       },options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{display:false}},scales:{x:{beginAtZero:true,ticks:{callback:v=>'$'+v.toLocaleString()},grid:{color:'#f0f0f0'}}}}});
     }
