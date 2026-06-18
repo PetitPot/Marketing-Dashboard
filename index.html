@@ -632,6 +632,7 @@ function renderICIP(){
   const ytd2025comp=months2026.reduce((s,mm)=>s+(byYr['2025']?.[mm]?.sales||0),0);
   const ytdSpend2026=months2026.reduce((s,mm)=>s+(byYr['2026'][mm]?.spend||0),0);
   const latest2026=months2026[months2026.length-1];
+  const latestMoName=MO_NAMES[parseInt(latest2026)-1];
   const latestData=byYr['2026']?.[latest2026]||{};
   const attrPct=latestData.units?(latestData.attr_units/latestData.units):0;
   const availMonths=[...new Set(trackerProducts.map(p=>p.month))].sort().reverse();
@@ -651,9 +652,9 @@ function renderICIP(){
       <div class="kpi"><div class="lbl">2026 YTD Sales (Jan–${MO_NAMES[parseInt(latest2026)-1]})</div><div class="val ora">${fmt$(ytd2026)}</div>${yoyStr(ytd2026,ytd2025comp,'vs 2025')}</div>
       <div class="kpi"><div class="lbl">2025 YTD Jan–${MO_NAMES[parseInt(latest2026)-1]}</div><div class="val">${fmt$(ytd2025comp)}</div><div class="sub">2025 Full Year: ${fmt$(Object.values(byYr['2025']||{}).reduce((s,v)=>s+v.sales,0))}</div></div>
       <div class="kpi"><div class="lbl">2026 YTD Ad Spend</div><div class="val blu">${fmt$(ytdSpend2026)}</div><div class="sub">${ytd2026?((ytdSpend2026/ytd2026)*100).toFixed(1)+'% of total sales':''}</div></div>
-      <div class="kpi"><div class="lbl">${latest2026} Total Sales</div><div class="val">${fmt$(latestData.sales||0)}</div>${byYr['2025']?.[latest2026]?yoyStr(latestData.sales,byYr['2025'][latest2026].sales,'vs 2025'):''}</div>
-      <div class="kpi"><div class="lbl">${latest2026} ARP</div><div class="val">${latestData.arp?'$'+latestData.arp.toFixed(2):'-'}</div>${byYr['2025']?.[latest2026]?.arp?yoyStr(latestData.arp,byYr['2025'][latest2026].arp,'vs 2025'):''}</div>
-      <div class="kpi"><div class="lbl">${latest2026} Attributed %</div><div class="val grn">${attrPct?(attrPct*100).toFixed(1)+'%':'-'}</div><div class="sub">of total units from ads</div></div>
+      <div class="kpi"><div class="lbl">${latestMoName} Total Sales</div><div class="val">${fmt$(latestData.sales||0)}</div>${byYr['2025']?.[latest2026]?yoyStr(latestData.sales,byYr['2025'][latest2026].sales,'vs 2025'):''}</div>
+      <div class="kpi"><div class="lbl">${latestMoName} ARP</div><div class="val">${latestData.arp?'$'+latestData.arp.toFixed(2):'-'}</div>${byYr['2025']?.[latest2026]?.arp?yoyStr(latestData.arp,byYr['2025'][latest2026].arp,'vs 2025'):''}</div>
+      <div class="kpi"><div class="lbl">${latestMoName} Attributed %</div><div class="val grn">${attrPct?(attrPct*100).toFixed(1)+'%':'-'}</div><div class="sub">of total units from ads</div></div>
     </div>
     <div class="chart-row single"><div class="chart-card"><h3>Monthly Total Sales — <span class="yr-2024">2024</span> vs <span class="yr-2025">2025</span> vs <span class="yr-2026">2026</span></h3><div class="chart-wrap xtall"><canvas id="cv-ic-trend"></canvas></div></div></div>
     <div class="chart-row">
