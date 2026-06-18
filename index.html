@@ -672,7 +672,7 @@ function renderICIP(){
       <select class="month-sel" onchange="icipProdMonth=this.value;renderICIP()">${availMonths.map(m=>`<option value="${m}" ${m===icipProdMonth?'selected':''}>${m}</option>`).join('')}</select>
       <span style="font-size:12px;color:var(--g500)">${sortedProds.length} SKUs — ${fmt$(grandTot)} total</span>
     </div>
-    ${sortedProds.length?`<div class="chart-row single"><div class="chart-card"><h3>Total Sales by Product — ${icipProdMonth}</h3><div class="chart-wrap xtall"><canvas id="cv-ic-prod"></canvas></div></div></div>
+    ${sortedProds.length?`<div class="chart-row single"><div class="chart-card"><h3>Monthly Sales by Format — All Time</h3><div class="chart-wrap tall"><canvas id="cv-fmt-line"></canvas></div></div></div>
     <div class="tbl-card"><div class="tbl-hdr"><h3>Product Sales — ${icipProdMonth}</h3></div><div class="tbl-wrap"><table><thead><tr>${HP('Product','sales',true)}<th class="L nosort">Size</th>${HP('Total Sales','sales')}${HP('Units','units')}${HP('Deliveries','deliveries')}${HP('ARP','arp')}<th class="nosort">Share</th></tr></thead><tbody>${(()=>{const PCOLS=['#fd5000','#1b69b3','#43B02A','#FF9900','#9c27b0','#00838f','#e53935','#546e7a','#f57c00','#388e3c','#7b1fa2','#0288d1'];return sortedProds.map((p,i)=>{const arpVal=p.units?p.sales/p.units:0;const pct=grandTot?p.sales/grandTot:0;return`<tr><td class="L" style="font-weight:600">${displayProd(p.product, p.size)}</td><td class="L"><span class="size-badge">${p.size}</span></td><td style="font-weight:600">${fmt$(p.sales)}</td><td>${Math.round(p.units).toLocaleString()}</td><td>${Math.round(p.deliveries).toLocaleString()}</td><td>${arpVal?'$'+arpVal.toFixed(2):'-'}</td><td><div style="display:flex;align-items:center;gap:6px;justify-content:flex-end"><span style="font-size:12px;color:var(--g700);min-width:34px">${(pct*100).toFixed(1)}%</span><div style="width:70px;background:var(--g200);border-radius:3px;height:6px"><div style="width:${Math.min(pct*100,100)}%;height:6px;border-radius:3px;background:${PCOLS[i%PCOLS.length]}"></div></div></div></td></tr>`;}).join('');})()}</tbody></table></div></div>`:'<div class="notice">No product data for this month.</div>'}`;
 
   // Club vs Grocery monthly rollup split by year
@@ -696,6 +696,13 @@ function renderICIP(){
   const moLabels26=months2026.map(mm=>MO_NAMES[parseInt(mm)-1]);
   const topProds=sortedProds.slice(0,12);
   const PCOLS=['#fd5000','#1b69b3','#43B02A','#FF9900','#9c27b0','#00838f','#e53935','#546e7a','#f57c00','#388e3c','#7b1fa2','#0288d1'];
+  // Format line chart data
+  const allFmtMonths=[...new Set(trackerProducts.map(p=>p.month))].sort();
+  const fmtByMo={};
+  trackerProducts.forEach(p=>{const fmt=PROD_FORMAT_MAP[displayProd(p.product,p.size)]||'Other';if(!fmtByMo[fmt])fmtByMo[fmt]={};fmtByMo[fmt][p.month]=(fmtByMo[fmt][p.month]||0)+p.sales;});
+  const fmtLineOrder=Object.keys(FORMAT_COLORS);
+  const fmtDatasets=fmtLineOrder.filter(f=>fmtByMo[f]).map(f=>({label:f,data:allFmtMonths.map(mm=>fmtByMo[f]?.[mm]||null),borderColor:FORMAT_COLORS[f],backgroundColor:FORMAT_COLORS[f]+'33',borderWidth:2,pointRadius:3,tension:0.3,spanGaps:false}));
+  const fmtMoLabels=allFmtMonths.map(mm=>MO_NAMES[parseInt(mm.slice(5))-1]+' \''+mm.slice(2,4));
 
   setTimeout(()=>{
     chartRefs.icTrend=new Chart($('cv-ic-trend'),{type:'bar',data:{labels:MO_NAMES,datasets:[
@@ -723,11 +730,8 @@ function renderICIP(){
     const yoyOpts={responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{font:{size:11}}}},scales:{y:{beginAtZero:true,ticks:{callback:v=>'$'+Math.round(v/1000)+'K'},grid:{color:'#f0f0f0'}}}};
     chartRefs.clubSales=new Chart($('cv-club-sales'),{type:'bar',data:{labels:cgMoLabels,datasets:[{label:'2024',data:club24,backgroundColor:'#9e9e9e33',borderColor:'#9e9e9e',borderWidth:2,borderRadius:3},{label:'2025',data:club25,backgroundColor:'#1b69b333',borderColor:'#1b69b3',borderWidth:2,borderRadius:3},{label:'2026',data:club26,backgroundColor:'#fd500055',borderColor:'#fd5000',borderWidth:2,borderRadius:3}]},options:yoyOpts});
     chartRefs.grocSales=new Chart($('cv-groc-sales'),{type:'bar',data:{labels:cgMoLabels,datasets:[{label:'2024',data:groc24,backgroundColor:'#9e9e9e33',borderColor:'#9e9e9e',borderWidth:2,borderRadius:3},{label:'2025',data:groc25,backgroundColor:'#1b69b333',borderColor:'#1b69b3',borderWidth:2,borderRadius:3},{label:'2026',data:groc26,backgroundColor:'#fd500055',borderColor:'#fd5000',borderWidth:2,borderRadius:3}]},options:yoyOpts});
-    if($('cv-ic-prod')&&topProds.length){
-      chartRefs.icProd=new Chart($('cv-ic-prod'),{type:'bar',data:{
-        labels:topProds.map(p=>displayProd(p.product,p.size)),
-        datasets:[{label:'Total Sales',data:topProds.map(p=>p.sales),backgroundColor:PCOLS.map(c=>c+'80'),borderColor:PCOLS,borderWidth:2,borderRadius:4}]
-      },options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{display:false}},scales:{x:{beginAtZero:true,ticks:{callback:v=>'$'+v.toLocaleString()},grid:{color:'#f0f0f0'}}}}});
+    if($('cv-fmt-line')&&fmtDatasets.length){
+      chartRefs.fmtLine=new Chart($('cv-fmt-line'),{type:'line',data:{labels:fmtMoLabels,datasets:fmtDatasets},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{font:{size:11},boxWidth:12}}},scales:{y:{beginAtZero:true,ticks:{callback:v=>'$'+Math.round(v/1000)+'K'},grid:{color:'#f0f0f0'}},x:{ticks:{font:{size:10}}}}}});
     }
   },50);
 }
