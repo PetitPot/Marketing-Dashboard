@@ -456,14 +456,17 @@ function renderSummary(d){
   const active=(d.campaigns||[]).filter(c=>c.spend>0);const t=totals(active);const p=prevWeekTotals();
   const COLORS=['#fd5000','#1b69b3','#43B02A','#FF9900','#9c27b0','#00838f'];
   const wlbl=fmtWeekLabel(currentWeek());
+  const allWksSorted=allWeekKeys().sort();
+  const isPartial=allWksSorted.slice(-2).includes(currentWeek());
   $('content').innerHTML=`
     ${weekBadges()}
+    ${isPartial?`<div style="background:#fff8e1;border:1px solid #f9a825;border-radius:6px;padding:8px 14px;margin-bottom:12px;font-size:13px;color:#6d5203"><strong>Partial data:</strong> Instacart uses a 14-day attribution window — sales for this week are still accruing and will increase over the next two weeks.</div>`:''}
     <div class="kpi-strip">
       <div class="kpi"><div class="lbl">Total Spend</div><div class="val">${fmt$(t.spend)}</div>${p?chg(t.spend,p.spend):''}</div>
       <div class="kpi"><div class="lbl">Attributed Sales</div><div class="val ora">${fmt$(t.sales)}</div>${p?chg(t.sales,p.sales):''}</div>
       <div class="kpi"><div class="lbl">Blended ROAS</div><div class="val ora">${fmtR(t.roas)}</div>${p?chg(t.roas,p.roas):''}</div>
       <div class="kpi"><div class="lbl">Units Sold</div><div class="val">${Math.round(t.units).toLocaleString()}</div>${p?chg(t.units,p.units):''}</div>
-      <div class="kpi"><div class="lbl">NTB Sales</div><div class="val grn">${fmt$(t.ntb)}</div><div class="sub">${fmtP(t.ntb_pct)} of sales</div></div>
+      <div class="kpi"><div class="lbl">NTB % of Sales</div><div class="val grn" style="font-size:2rem">${fmtP(t.ntb_pct)}</div><div class="sub">${fmt$(t.ntb)} NTB sales</div></div>
       <div class="kpi"><div class="lbl">Impressions</div><div class="val">${fmtK(t.impr)}</div>${p?chg(t.impr,p.impr):''}</div>
     </div>
     <div class="chart-row">
