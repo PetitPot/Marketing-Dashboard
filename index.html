@@ -636,6 +636,10 @@ function renderICIP(){
       <div class="chart-card"><h3>2026: Attributed vs Organic Units</h3><div class="chart-wrap"><canvas id="cv-ic-units"></canvas></div></div>
     </div>
     <div class="chart-row">${CAMP_NAMES.map((cn,ci)=>`<div class="chart-card"><h3>${cn} — Monthly Attributed Sales (2025)</h3><div class="chart-wrap"><canvas id="cv-camp-${ci}"></canvas></div></div>`).join('')}</div>
+    <div class="chart-row">
+      <div class="chart-card"><h3>Club Products — Monthly Total Sales</h3><div class="chart-wrap"><canvas id="cv-club-sales"></canvas></div></div>
+      <div class="chart-card"><h3>Grocery — Monthly Total Sales</h3><div class="chart-wrap"><canvas id="cv-groc-sales"></canvas></div></div>
+    </div>
     <div class="section-sep">Product Detail by Month</div>
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap">
       <label style="font-size:12px;font-weight:700;color:var(--g700)">Month:</label>
@@ -645,6 +649,13 @@ function renderICIP(){
     ${sortedProds.length?`<div class="chart-row single"><div class="chart-card"><h3>Total Sales by Product — ${icipProdMonth}</h3><div class="chart-wrap xtall"><canvas id="cv-ic-prod"></canvas></div></div></div>
     <div class="tbl-card"><div class="tbl-hdr"><h3>Product Sales — ${icipProdMonth}</h3></div><div class="tbl-wrap"><table><thead><tr>${HP('Product','sales',true)}<th class="L nosort">Size</th>${HP('Total Sales','sales')}${HP('Units','units')}${HP('Deliveries','deliveries')}${HP('ARP','arp')}<th class="nosort">Share</th></tr></thead><tbody>${(()=>{const PCOLS=['#fd5000','#1b69b3','#43B02A','#FF9900','#9c27b0','#00838f','#e53935','#546e7a','#f57c00','#388e3c','#7b1fa2','#0288d1'];return sortedProds.map((p,i)=>{const arpVal=p.units?p.sales/p.units:0;const pct=grandTot?p.sales/grandTot:0;return`<tr><td class="L" style="font-weight:600">${displayProd(p.product, p.size)}</td><td class="L"><span class="size-badge">${p.size}</span></td><td style="font-weight:600">${fmt$(p.sales)}</td><td>${Math.round(p.units).toLocaleString()}</td><td>${Math.round(p.deliveries).toLocaleString()}</td><td>${arpVal?'$'+arpVal.toFixed(2):'-'}</td><td><div style="display:flex;align-items:center;gap:6px;justify-content:flex-end"><span style="font-size:12px;color:var(--g700);min-width:34px">${(pct*100).toFixed(1)}%</span><div style="width:70px;background:var(--g200);border-radius:3px;height:6px"><div style="width:${Math.min(pct*100,100)}%;height:6px;border-radius:3px;background:${PCOLS[i%PCOLS.length]}"></div></div></div></td></tr>`;}).join('');})()}</tbody></table></div></div>`:'<div class="notice">No product data for this month.</div>'}`;
 
+  // Club vs Grocery monthly rollup from tracker products
+  const clubByMo={},grocByMo={};
+  trackerProducts.forEach(p=>{const fmt=PROD_FORMAT_MAP[displayProd(p.product,p.size)]||'Other';const mo=p.month;if(fmt==='Club'){clubByMo[mo]=(clubByMo[mo]||0)+p.sales;}else{grocByMo[mo]=(grocByMo[mo]||0)+p.sales;}});
+  const allTrackerMos=[...new Set(trackerProducts.map(p=>p.month))].sort();
+  const clubSeries=allTrackerMos.map(m=>clubByMo[m]||0);
+  const grocSeries=allTrackerMos.map(m=>grocByMo[m]||0);
+  const trackerMoLabels=allTrackerMos.map(m=>{const d=new Date(m+'-15');return['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.getMonth()]+' '+String(d.getFullYear()).slice(2);});
   const mo26=allMonths.map(mm=>byYr['2026']?.[mm]?.sales||null);
   const mo25=allMonths.map(mm=>byYr['2025']?.[mm]?.sales||null);
   const mo24=allMonths.map(mm=>byYr['2024']?.[mm]?.sales||null);
@@ -679,6 +690,8 @@ function renderICIP(){
         {label:'Spend',data:cMonths.map(mm=>campData[mm]?.spend||0),backgroundColor:'#43B02A33',borderColor:'#43B02A',borderWidth:2,borderRadius:3},
       ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{font:{size:11}}}},scales:{y:{beginAtZero:true,ticks:{callback:v=>'$'+Math.round(v/1000)+'K'},grid:{color:'#f0f0f0'}}}}});
     });
+    chartRefs.clubSales=new Chart($('cv-club-sales'),{type:'bar',data:{labels:trackerMoLabels,datasets:[{label:'Club Sales',data:clubSeries,backgroundColor:'#00838f33',borderColor:'#00838f',borderWidth:2,borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{callback:v=>'$'+Math.round(v/1000)+'K'},grid:{color:'#f0f0f0'}}}}});
+    chartRefs.grocSales=new Chart($('cv-groc-sales'),{type:'bar',data:{labels:trackerMoLabels,datasets:[{label:'Grocery Sales',data:grocSeries,backgroundColor:'#1b69b333',borderColor:'#1b69b3',borderWidth:2,borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{callback:v=>'$'+Math.round(v/1000)+'K'},grid:{color:'#f0f0f0'}}}}});
     if($('cv-ic-prod')&&topProds.length){
       chartRefs.icProd=new Chart($('cv-ic-prod'),{type:'bar',data:{
         labels:topProds.map(p=>displayProd(p.product,p.size)),
