@@ -60,6 +60,11 @@ tr:hover td{background:#fafafa;}
 .month-sel{border:1px solid var(--g300);border-radius:6px;padding:5px 10px;font-size:13px;font-weight:600;color:var(--g900);background:#fff;cursor:pointer;}
 .section-sep{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--g500);margin:18px 0 10px;padding-top:14px;border-top:1px solid var(--g200);}
 .yr-2024{color:#9e9e9e;}.yr-2025{color:var(--blue);}.yr-2026{color:var(--orange);}
+.slicer-row{display:flex;align-items:center;gap:8px;margin:14px 0 10px;flex-wrap:wrap;}
+.slicer-lbl{font-size:12px;font-weight:700;color:var(--g700);white-space:nowrap;}
+.s-btn{padding:5px 14px;border-radius:20px;border:2px solid #ddd;background:#fff;font-size:12px;font-weight:600;cursor:pointer;color:var(--g500);transition:all .15s;}
+.s-btn:hover{border-color:#aaa;color:var(--g800);}
+.s-btn.on{color:#fff;}
 </style>
 </head>
 <body>
@@ -83,6 +88,7 @@ tr:hover td{background:#fafafa;}
   <div class="tab"        data-tab="products"  onclick="setTab('products',this)">By Product</div>
   <div class="tab"        data-tab="trend"     onclick="setTab('trend',this)">Trend</div>
   <div class="tab"        data-tab="icip"      onclick="setTab('icip',this)">ICIP / Total Sales</div>
+  <div class="tab"        data-tab="monthly"   onclick="setTab('monthly',this)">Monthly by Group</div>
 </div>
 <div class="content" id="content"></div>
 <script>
@@ -456,12 +462,13 @@ function setTab(tab,el){
   activeTab=tab;
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   if(el)el.classList.add('active');
-  document.getElementById('weekPillWrap').style.display=(tab==='icip')?'none':'';
+  document.getElementById('weekPillWrap').style.display=(tab==='icip'||tab==='monthly')?'none':'';
   render();
 }
 function render(){
   destroyCharts();
   if(activeTab==='icip'){renderICIP();return;}
+  if(activeTab==='monthly'){renderMonthly();return;}
   const d=currentWkData();
   if(!d||!d.campaigns){$('content').innerHTML=`<div class="empty-state">No data for this week.</div>`;return;}
   if(activeTab==='summary')renderSummary(d);
@@ -739,8 +746,167 @@ function renderICIP(){
 function sortICIP(key){if(icipSortKey===key)icipSortDir*=-1;else{icipSortKey=key;icipSortDir=-1;}renderICIP();}
 function setTrendPreset(n){const allWks=allWeekKeys().filter(w=>{const d=getWeekData(w);return d?.campaigns?.length>0;});trendTo=allWks[allWks.length-1];trendFrom=allWks[Math.max(0,allWks.length-n)];renderTrend();}
 
-/* ---- INIT ---- */
-populateWeekSelector();
+
+const MONTHLY_BY_GRP={"2025-01":{"Glass 2ct":{"total":45505.16,"attr":0,"org":45505.16,"ntb":0},"Paper Cup":{"total":34167.51,"attr":38219.46,"org":0,"ntb":14701.39},"Pints":{"total":9702.16,"attr":0,"org":9702.16,"ntb":0},"Club":{"total":16112.02,"attr":12565.36,"org":3546.66,"ntb":8893.88}},"2025-02":{"Glass 2ct":{"total":59438.72,"attr":29490.71,"org":29948.01,"ntb":10739.22},"Paper Cup":{"total":34119.6,"attr":30193.17,"org":3926.43,"ntb":11077.79},"Pints":{"total":12284.85,"attr":0,"org":12284.85,"ntb":0},"Club":{"total":23997.47,"attr":25569.63,"org":0,"ntb":18400.68}},"2025-03":{"Glass 2ct":{"total":72091.18,"attr":34110.53,"org":37980.65,"ntb":12237.6},"Paper Cup":{"total":52835.14,"attr":41700.79,"org":11134.35,"ntb":16556.09},"Pints":{"total":15177.54,"attr":0,"org":15177.54,"ntb":0},"Club":{"total":15711.2,"attr":14948.06,"org":763.14,"ntb":7312.69}},"2025-04":{"Glass 2ct":{"total":57770.88,"attr":43179.79,"org":14591.09,"ntb":14600.07},"Paper Cup":{"total":32178.27,"attr":34713.67,"org":0,"ntb":10866.16},"Pints":{"total":15414.37,"attr":0,"org":15414.37,"ntb":0},"Club":{"total":3974.74,"attr":3620.95,"org":353.79,"ntb":1189.74}},"2025-05":{"Glass 2ct":{"total":54709.27,"attr":45565.28,"org":9143.99,"ntb":14950.09},"Paper Cup":{"total":30652.32,"attr":33350.99,"org":0,"ntb":10843.57},"Pints":{"total":15360.88,"attr":0,"org":15360.88,"ntb":0},"Club":{"total":10523.3,"attr":10746.8,"org":0,"ntb":6791.29}},"2025-06":{"Glass 2ct":{"total":66048.47,"attr":43955.52,"org":22092.95,"ntb":15165.83},"Paper Cup":{"total":37044.78,"attr":32242.13,"org":4802.65,"ntb":10811.66},"Pints":{"total":19184.83,"attr":0,"org":19184.83,"ntb":0},"Club":{"total":32520.26,"attr":29126.93,"org":3393.33,"ntb":20997.76}},"2025-07":{"Glass 2ct":{"total":49506.12,"attr":45652.25,"org":3853.87,"ntb":15166.82},"Paper Cup":{"total":36835.35,"attr":36719.84,"org":115.51,"ntb":14847.66},"Pints":{"total":14465.91,"attr":0,"org":14465.91,"ntb":0},"Club":{"total":24803.12,"attr":24634.51,"org":168.61,"ntb":15686.09}},"2025-08":{"Glass 2ct":{"total":51662.44,"attr":46801.22,"org":4861.22,"ntb":14953.47},"Paper Cup":{"total":26006.21,"attr":27834.65,"org":0,"ntb":8705.58},"Pints":{"total":14949.02,"attr":0,"org":14949.02,"ntb":0},"Club":{"total":28375.44,"attr":28499.56,"org":0,"ntb":18183.7}},"2025-09":{"Glass 2ct":{"total":67101.84,"attr":45046.83,"org":22055.01,"ntb":14121.52},"Paper Cup":{"total":38233.78,"attr":31898.78,"org":6335.0,"ntb":9301.12},"Pints":{"total":17887.28,"attr":0,"org":17887.28,"ntb":0},"Club":{"total":16596.23,"attr":14002.51,"org":2593.72,"ntb":7859.94}},"2025-10":{"Glass 2ct":{"total":52987.97,"attr":50378.66,"org":2609.31,"ntb":17407.98},"Paper Cup":{"total":28848.33,"attr":28384.61,"org":463.72,"ntb":9149.12},"Pints":{"total":14143.76,"attr":0,"org":14143.76,"ntb":0},"Club":{"total":5860.45,"attr":6278.15,"org":0,"ntb":2447.92}},"2025-11":{"Glass 2ct":{"total":51250.59,"attr":38565.84,"org":12684.75,"ntb":13389.77},"Paper Cup":{"total":25304.57,"attr":20574.39,"org":4730.18,"ntb":7386.71},"Pints":{"total":14544.24,"attr":7789.2,"org":6755.04,"ntb":2945.34},"Club":{"total":5425.64,"attr":4981.86,"org":443.78,"ntb":1629.61}},"2025-12":{"Glass 2ct":{"total":62292.5,"attr":34466.11,"org":27826.39,"ntb":12523.57},"Paper Cup":{"total":31067.65,"attr":19938.0,"org":11129.65,"ntb":7963.03},"Pints":{"total":17893.12,"attr":11301.44,"org":6591.68,"ntb":4272.23},"Club":{"total":6022.89,"attr":4782.94,"org":1239.95,"ntb":1678.38}},"2026-01":{"Glass 2ct":{"total":62457.34,"attr":41561.73,"org":20895.61,"ntb":16012.87},"Paper Cup":{"total":23693.41,"attr":15334.95,"org":8358.46,"ntb":7252.19},"Pints":{"total":16438.21,"attr":13956.96,"org":2481.25,"ntb":5132.13},"Club":{"total":3977.95,"attr":2113.45,"org":1864.5,"ntb":560.76}},"2026-02":{"Glass 2ct":{"total":68782.08,"attr":37963.68,"org":30818.4,"ntb":15251.95},"Paper Cup":{"total":35641.16,"attr":20618.01,"org":15023.15,"ntb":11352.81},"Pints":{"total":18207.26,"attr":11813.42,"org":6393.84,"ntb":4234.65},"Club":{"total":3529.86,"attr":0,"org":3529.86,"ntb":0}},"2026-03":{"Glass 2ct":{"total":86131.72,"attr":45109.97,"org":41021.75,"ntb":16455.37},"Paper Cup":{"total":53759.17,"attr":40317.54,"org":13441.63,"ntb":20938.0},"Pints":{"total":12330.44,"attr":9447.84,"org":2882.6,"ntb":3597.15},"Club":{"total":30276.31,"attr":19673.89,"org":10602.42,"ntb":15530.0}},"2026-04":{"Glass 2ct":{"total":65743.94,"attr":43861.73,"org":21882.21,"ntb":14909.92},"Paper Cup":{"total":34967.86,"attr":25467.94,"org":9499.92,"ntb":10529.11},"Pints":{"total":5816.21,"attr":7999.57,"org":0,"ntb":3068.08},"Club":{"total":38422.69,"attr":37011.64,"org":1411.05,"ntb":23812.32},"Protein":{"total":356.29,"attr":78.21,"org":278.08,"ntb":8.69}},"2026-05":{"Glass 2ct":{"total":64101.05,"attr":48895.44,"org":15205.61,"ntb":16124.69},"Paper Cup":{"total":29464.82,"attr":21895.83,"org":7568.99,"ntb":8870.53},"Pints":{"total":1756.86,"attr":3677.57,"org":0,"ntb":1275.0},"Club":{"total":23601.56,"attr":20644.21,"org":2957.35,"ntb":10337.04},"Protein":{"total":11927.0,"attr":14591.4,"org":0,"ntb":10656.97}}};
+
+/* ============================================================  MONTHLY BY GROUP  ============================================================ */
+const MO_GROUPS=['Glass 2ct','Paper Cup','Pints','Club','Protein'];
+const MO_GC={'Glass 2ct':'#1b69b3','Paper Cup':'#fd5000','Pints':'#9c27b0','Club':'#00838f','Protein':'#43B02A'};
+let moSelGroups=new Set(MO_GROUPS);
+
+function toggleMoGroup(g){
+  if(moSelGroups.has(g))moSelGroups.delete(g);else moSelGroups.add(g);
+  renderMonthly();
+}
+
+function renderMonthly(){
+  const MO=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const allMos=Object.keys(MONTHLY_BY_GRP).sort();
+  const last12=allMos.slice(-12);
+  const moLabels=last12.map(mo=>MO[+mo.slice(5)-1]+" '"+mo.slice(2,4));
+  const sel=[...moSelGroups].filter(g=>MO_GROUPS.includes(g));
+
+  // KPI totals — all groups, last 12 months
+  let totTotal=0,totAttr=0,totOrg=0,totNtb=0;
+  last12.forEach(mo=>MO_GROUPS.forEach(g=>{
+    const v=MONTHLY_BY_GRP[mo]?.[g]||{};
+    totTotal+=v.total||0; totAttr+=v.attr||0; totOrg+=v.org||0; totNtb+=v.ntb||0;
+  }));
+  const avgNtb=totAttr?totNtb/totAttr:0;
+
+  // Chart: 3 grouped stacked bars — Total | Attributed | NTB
+  const totalDS=sel.map((g,i)=>({
+    label:i===0?'Total: '+g:g,
+    data:last12.map(mo=>+(MONTHLY_BY_GRP[mo]?.[g]?.total||0).toFixed(0)),
+    backgroundColor:MO_GC[g]+'44',borderColor:MO_GC[g],borderWidth:1,borderRadius:0,
+    stack:'total'
+  }));
+  const attrDS=sel.map((g,i)=>({
+    label:i===0?'Attributed: '+g:g,
+    data:last12.map(mo=>+(MONTHLY_BY_GRP[mo]?.[g]?.attr||0).toFixed(0)),
+    backgroundColor:MO_GC[g]+'99',borderColor:MO_GC[g],borderWidth:2,borderRadius:0,
+    stack:'attr'
+  }));
+  const ntbDS2=sel.map((g,i)=>({
+    label:i===0?'NTB: '+g:g,
+    data:last12.map(mo=>+(MONTHLY_BY_GRP[mo]?.[g]?.ntb||0).toFixed(0)),
+    backgroundColor:MO_GC[g]+'cc',borderColor:MO_GC[g],borderWidth:2,borderRadius:0,
+    stack:'ntb'
+  }));
+  const combinedDS=[...totalDS,...attrDS,...ntbDS2];
+  // NTB% lines on secondary Y axis (one per selected group)
+  const ntbPctDS=sel.map(g=>({
+    type:'line',
+    label:'NTB% '+g,
+    data:last12.map(mo=>{const v=MONTHLY_BY_GRP[mo]?.[g];return v?.attr?+(v.ntb/v.attr*100).toFixed(1):null;}),
+    borderColor:MO_GC[g],backgroundColor:'transparent',
+    borderWidth:2,pointRadius:4,pointBackgroundColor:MO_GC[g],
+    tension:0.3,spanGaps:true,fill:false,
+    yAxisID:'y2',stack:undefined
+  }));
+  const fullDS=[...combinedDS,...ntbPctDS];
+
+  // NTB% line (on attributed sales)
+  const ntbDS=sel.map(g=>({
+    label:g,
+    data:last12.map(mo=>{const v=MONTHLY_BY_GRP[mo]?.[g];return v?.attr?+(v.ntb/v.attr*100).toFixed(1):null;}),
+    borderColor:MO_GC[g],backgroundColor:'transparent',borderWidth:2,pointRadius:3,tension:0.3,spanGaps:true,fill:false
+  }));
+
+  // Slicer HTML
+  const slicerBtns=MO_GROUPS.map(g=>{
+    const on=moSelGroups.has(g);const col=MO_GC[g];
+    return`<button class="s-btn${on?' on':''}" onclick="toggleMoGroup('${g}')" style="${on?`background:${col};border-color:${col};`:`border-color:${col};color:${col};`}">${g}</button>`;
+  }).join('');
+
+  // Table: months desc, each selected group → Attributed | Organic columns
+  const grpHdrs=sel.map(g=>`<th colspan="2" style="text-align:center;background:${MO_GC[g]}18;border-bottom:3px solid ${MO_GC[g]}">${g}</th>`).join('');
+  const subHdrs=sel.map(()=>`<th>Attributed</th><th>Organic</th>`).join('');
+  const tblRows=last12.slice().reverse().map(mo=>{
+    const selTotal=sel.reduce((s,g)=>s+(MONTHLY_BY_GRP[mo]?.[g]?.total||0),0);
+    const cells=sel.map(g=>{
+      const v=MONTHLY_BY_GRP[mo]?.[g];
+      if(!v||(!v.total&&!v.attr))return`<td style="color:#bbb">—</td><td style="color:#bbb">—</td>`;
+      return`<td>${fmt$(Math.round(v.attr||0))}</td><td style="color:#777">${v.org>=1?fmt$(Math.round(v.org)):'—'}</td>`;
+    }).join('');
+    const lbl=MO[+mo.slice(5)-1]+' '+mo.slice(0,4);
+    return`<tr><td style="font-weight:700;white-space:nowrap">${lbl}</td><td style="font-weight:600">${fmt$(Math.round(selTotal))}</td>${cells}</tr>`;
+  }).join('');
+
+  $('content').innerHTML=`
+    <div class="kpi-strip">
+      <div class="kpi"><div class="lbl">L12M Total ICIP Sales</div><div class="val ora">${fmt$(Math.round(totTotal))}</div><div class="sub">UPC-based, all groups</div></div>
+      <div class="kpi"><div class="lbl">L12M Attributed</div><div class="val blu">${fmt$(Math.round(totAttr))}</div><div class="sub">${totTotal?(totAttr/totTotal*100).toFixed(0)+'% of total':''}</div></div>
+      <div class="kpi"><div class="lbl">L12M Organic</div><div class="val">${fmt$(Math.round(totOrg))}</div><div class="sub">${totTotal?(totOrg/totTotal*100).toFixed(0)+'% of total':''}</div></div>
+      <div class="kpi"><div class="lbl">L12M NTB % (Attr)</div><div class="val grn">${(avgNtb*100).toFixed(1)}%</div><div class="sub">${fmt$(Math.round(totNtb))} NTB sales</div></div>
+    </div>
+    <div class="slicer-row">
+      <span class="slicer-lbl">Group:</span>${slicerBtns}
+      <button class="s-btn" onclick="moSelGroups=new Set(MO_GROUPS);renderMonthly()" style="margin-left:8px;border-style:dashed">All</button>
+      <button class="s-btn" onclick="moSelGroups=new Set();renderMonthly()" style="border-style:dashed">None</button>
+    </div>
+    <div class="chart-row single"><div class="chart-card"><h3>Monthly Sales by Group — Total vs Attributed vs NTB</h3><div class="chart-wrap tall"><canvas id="cv-mo-total"></canvas></div></div></div>
+    <div class="chart-row single"><div class="chart-card"><h3>NTB % by Group (on Attributed Sales)</h3><div class="chart-wrap"><canvas id="cv-mo-ntb"></canvas></div></div></div>
+    <div class="section-sep">Attributed vs Organic by Group — Last 12 Months</div>
+    <div class="tbl-card"><div class="tbl-wrap"><table>
+      <thead>
+        <tr><th rowspan="2" class="L">Month</th><th rowspan="2">Total (Selected)</th>${grpHdrs}</tr>
+        <tr>${subHdrs}</tr>
+      </thead>
+      <tbody>${tblRows}</tbody>
+    </table></div></div>
+    <div style="font-size:11px;color:var(--g500);margin-top:10px;padding:0 4px">Total = ICIP monthly UPC tracker. Attributed = campaign item-level data. Organic = Total minus Attributed per group. NTB% on attributed sales only.</div>
+  `;
+
+  setTimeout(()=>{
+    const stkOpts={responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{font:{size:11},boxWidth:12}}},scales:{x:{stacked:true},y:{stacked:true,beginAtZero:true,ticks:{callback:v=>'$'+Math.round(v/1000)+'K'},grid:{color:'#f0f0f0'}}}};
+    // Custom legend: show group colors once, not 3x
+  const legendItems=sel.map(g=>({text:g,fillStyle:MO_GC[g]+'99',strokeStyle:MO_GC[g],lineWidth:2}));
+  const triOpts={responsive:true,maintainAspectRatio:false,
+    plugins:{
+      legend:{display:false},
+      tooltip:{callbacks:{
+        title:ctx=>ctx[0].label,
+        label:ctx=>{
+          if(ctx.dataset.yAxisID==='y2')return`${ctx.dataset.label.replace('NTB% ','')}: NTB% ${ctx.parsed.y}%`;
+          const stack=ctx.dataset.stack;
+          const lbl=stack==='total'?'Total':stack==='attr'?'Attributed':'NTB $';
+          const g=sel[ctx.datasetIndex%sel.length];
+          return`${g} ${lbl}: $${Math.round(ctx.parsed.y).toLocaleString()}`;
+        }
+      }}
+    },
+    scales:{
+      x:{stacked:true},
+      y:{stacked:true,beginAtZero:true,ticks:{callback:v=>'$'+Math.round(v/1000)+'K'},grid:{color:'#f0f0f0'}},
+      y2:{type:'linear',position:'right',min:0,max:100,ticks:{callback:v=>v+'%',font:{size:11}},grid:{drawOnChartArea:false},title:{display:true,text:'NTB %',font:{size:11}}}
+    }
+  };
+  chartRefs.moTotal=new Chart($('cv-mo-total'),{type:'bar',data:{labels:moLabels,datasets:fullDS},options:triOpts});
+  // Draw custom legend below title
+  const legWrap=document.createElement('div');
+  legWrap.style.cssText='display:flex;gap:16px;flex-wrap:wrap;padding:4px 8px 8px;font-size:12px;align-items:center';
+  [{t:'Total (ICIP)',op:'44'},{t:'Attributed',op:'99'},{t:'NTB $',op:'cc'}].forEach(({t,op})=>{
+    const row=document.createElement('span');row.style.cssText='display:flex;align-items:center;gap:6px;font-weight:600;color:#555';
+    row.innerHTML=`<span style="display:inline-flex;gap:3px">${sel.map(g=>`<span style="width:10px;height:10px;background:${MO_GC[g]+op};border:1px solid ${MO_GC[g]};display:inline-block;border-radius:2px"></span>`).join('')}</span>${t}`;
+    legWrap.appendChild(row);
+  });
+  // NTB% line legend
+  const ntbLegRow=document.createElement('span');
+  ntbLegRow.style.cssText='display:flex;align-items:center;gap:6px;font-weight:600;color:#555';
+  ntbLegRow.innerHTML=`<span style="display:inline-flex;gap:3px">${sel.map(g=>`<span style="width:16px;height:2px;background:${MO_GC[g]};display:inline-block;vertical-align:middle"></span>`).join('')}</span>NTB % (right axis)`;
+  legWrap.appendChild(ntbLegRow);
+  $('cv-mo-total').parentElement.appendChild(legWrap);
+    if(ntbDS.length){
+      chartRefs.moNtb=new Chart($('cv-mo-ntb'),{type:'line',data:{labels:moLabels,datasets:ntbDS},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{font:{size:11},boxWidth:12}},tooltip:{callbacks:{label:ctx=>ctx.dataset.label+': '+ctx.parsed.y+'%'}}},scales:{y:{beginAtZero:true,max:100,ticks:{callback:v=>v+'%'},grid:{color:'#f0f0f0'}}}}});
+    } else {
+      const el=$('cv-mo-ntb');if(el)el.parentElement.innerHTML='<div style="padding:20px;color:var(--g500);text-align:center">Select a group to view NTB trend.</div>';
+    }
+  },50);
+}
+
+
+/* ---- INIT ---- */populateWeekSelector();
 document.getElementById('weekPillWrap').style.display='';
 render();
 </script>
