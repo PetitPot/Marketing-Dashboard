@@ -787,7 +787,7 @@ function renderMonthly(){
     backgroundColor:MO_GC[g]+'99',borderColor:MO_GC[g],borderWidth:2,borderRadius:0,
     stack:'attr'
   }));
-  const spendDS=sel.map((g,i)=>({type:'line',label:g+' Spend',data:last12.map(mo=>+(MONTHLY_BY_GRP[mo]?.[g]?.spend||0).toFixed(0)),borderColor:MO_GC[g],backgroundColor:MO_GC[g]+'33',borderWidth:2,pointRadius:3,fill:false,yAxisID:'y3',stack:undefined}));
+  const spendDS=sel.map((g,i)=>({type:'bar',label:g+' Spend',data:last12.map(mo=>+(MONTHLY_BY_GRP[mo]?.[g]?.spend||0).toFixed(0)),backgroundColor:MO_GC[g]+'55',borderColor:MO_GC[g],borderWidth:1,yAxisID:'y3',stack:'spend'}));
   const combinedDS=[...totalDS,...attrDS];
   // NTB% lines on secondary Y axis (one per selected group)
   const ntbPctDS=sel.map(g=>({
