@@ -774,21 +774,24 @@ function renderMonthly(){
   }));
   const avgNtb=totAttr?totNtb/totAttr:0;
 
-  // Chart: 3 grouped stacked bars — Total | Attributed | NTB
-  const totalDS=sel.map((g,i)=>({
-    label:i===0?'Total: '+g:g,
-    data:last12.map(mo=>+(MONTHLY_BY_GRP[mo]?.[g]?.total||0).toFixed(0)),
-    backgroundColor:MO_GC[g]+'44',borderColor:MO_GC[g],borderWidth:1,borderRadius:0,
-    stack:'total'
+  // Chart: stacked Organic (bottom, light) + Attributed (top, dark), spend dashed line on right
+  const orgDS=sel.map(g=>({
+    label:g+' Organic',
+    data:last12.map(mo=>{const v=MONTHLY_BY_GRP[mo]?.[g]||{};return +Math.max(0,(v.total||0)-(v.attr||0)).toFixed(0);}),
+    backgroundColor:MO_GC[g]+'44',borderWidth:0,stack:'s1'
   }));
-  const attrDS=sel.map((g,i)=>({
-    label:i===0?'Attributed: '+g:g,
+  const attrDS=sel.map(g=>({
+    label:g+' Attributed',
     data:last12.map(mo=>+(MONTHLY_BY_GRP[mo]?.[g]?.attr||0).toFixed(0)),
-    backgroundColor:MO_GC[g]+'99',borderColor:MO_GC[g],borderWidth:2,borderRadius:0,
-    stack:'attr'
+    backgroundColor:MO_GC[g]+'cc',borderWidth:0,stack:'s1'
   }));
-  const spendDS=sel.map((g,i)=>({type:'bar',label:g+' Spend',data:last12.map(mo=>+(MONTHLY_BY_GRP[mo]?.[g]?.spend||0).toFixed(0)),backgroundColor:MO_GC[g]+'55',borderColor:MO_GC[g],borderWidth:1,yAxisID:'y3',stack:'spend'}));
-  const combinedDS=[...totalDS,...attrDS];
+  const spendDS=[{
+    type:'line',label:'Ad Spend',
+    data:last12.map(mo=>+sel.reduce((s,g)=>s+(MONTHLY_BY_GRP[mo]?.[g]?.spend||0),0).toFixed(0)),
+    borderColor:'#fd5000',borderDash:[6,3],borderWidth:2,
+    pointRadius:4,pointBackgroundColor:'#fd5000',
+    fill:false,yAxisID:'y3',stack:undefined
+  }];
   // NTB% lines on secondary Y axis (one per selected group)
   const ntbPctDS=sel.map(g=>({
     type:'line',
@@ -799,7 +802,7 @@ function renderMonthly(){
     tension:0.3,spanGaps:true,fill:false,
     yAxisID:'y2',stack:undefined
   }));
-  const fullDS=[...combinedDS,...spendDS,...ntbPctDS];
+  const fullDS=[...orgDS,...attrDS,...spendDS,...ntbPctDS];
 
   // NTB% line (on attributed sales)
   const ntbDS=sel.map(g=>({
@@ -863,10 +866,10 @@ function renderMonthly(){
       tooltip:{callbacks:{
         title:ctx=>ctx[0].label,
         label:ctx=>{
+          if(ctx.dataset.yAxisID==='y3')return`Ad Spend: $${Math.round(ctx.parsed.y).toLocaleString()}`;
           if(ctx.dataset.yAxisID==='y2')return`${ctx.dataset.label.replace('NTB% ','')}: NTB% ${ctx.parsed.y}%`;
-          const stack=ctx.dataset.stack;
-          const lbl=stack==='total'?'Total':stack==='attr'?'Attributed':stack==='spend'?'Ad Spend':'Other';
-          const g=sel[ctx.datasetIndex%sel.length];
+          const lbl=ctx.dataset.label.includes('Organic')?'Organic':'Attributed';
+          const g=ctx.dataset.label.replace(' Organic','').replace(' Attributed','');
           return`${g} ${lbl}: $${Math.round(ctx.parsed.y).toLocaleString()}`;
         }
       }}
@@ -885,11 +888,14 @@ function renderMonthly(){
   // Draw custom legend below title
   const legWrap=document.createElement('div');
   legWrap.style.cssText='display:flex;gap:16px;flex-wrap:wrap;padding:4px 8px 8px;font-size:12px;align-items:center';
-  [{t:'Total (ICIP)',op:'44'},{t:'Attributed',op:'99'},{t:'Ad Spend',op:'55'}].forEach(({t,op})=>{
+  [{t:'Organic',op:'44'},{t:'Attributed',op:'cc'}].forEach(({t,op})=>{
     const row=document.createElement('span');row.style.cssText='display:flex;align-items:center;gap:6px;font-weight:600;color:#555';
     row.innerHTML=`<span style="display:inline-flex;gap:3px">${sel.map(g=>`<span style="width:10px;height:10px;background:${MO_GC[g]+op};border:1px solid ${MO_GC[g]};display:inline-block;border-radius:2px"></span>`).join('')}</span>${t}`;
     legWrap.appendChild(row);
   });
+  const spendLeg=document.createElement('span');spendLeg.style.cssText='display:flex;align-items:center;gap:6px;font-weight:600;color:#555';
+  spendLeg.innerHTML=`<span style="width:22px;height:2px;background:#fd5000;display:inline-block;border-top:2px dashed #fd5000"></span>Ad Spend`;
+  legWrap.appendChild(spendLeg);
   // NTB% line legend
   const ntbLegRow=document.createElement('span');
   ntbLegRow.style.cssText='display:flex;align-items:center;gap:6px;font-weight:600;color:#555';
