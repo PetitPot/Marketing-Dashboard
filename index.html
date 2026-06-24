@@ -865,7 +865,7 @@ function renderMonthly(){
         label:ctx=>{
           if(ctx.dataset.yAxisID==='y2')return`${ctx.dataset.label.replace('NTB% ','')}: NTB% ${ctx.parsed.y}%`;
           const stack=ctx.dataset.stack;
-          const lbl=stack==='total'?'Total':stack==='attr'?'Attributed':'NTB $';
+          const lbl=stack==='total'?'Total':stack==='attr'?'Attributed':stack==='spend'?'Ad Spend':'Other';
           const g=sel[ctx.datasetIndex%sel.length];
           return`${g} ${lbl}: $${Math.round(ctx.parsed.y).toLocaleString()}`;
         }
@@ -885,7 +885,7 @@ function renderMonthly(){
   // Draw custom legend below title
   const legWrap=document.createElement('div');
   legWrap.style.cssText='display:flex;gap:16px;flex-wrap:wrap;padding:4px 8px 8px;font-size:12px;align-items:center';
-  [{t:'Total (ICIP)',op:'44'},{t:'Attributed',op:'99'},{t:'NTB $',op:'cc'}].forEach(({t,op})=>{
+  [{t:'Total (ICIP)',op:'44'},{t:'Attributed',op:'99'},{t:'Ad Spend',op:'55'}].forEach(({t,op})=>{
     const row=document.createElement('span');row.style.cssText='display:flex;align-items:center;gap:6px;font-weight:600;color:#555';
     row.innerHTML=`<span style="display:inline-flex;gap:3px">${sel.map(g=>`<span style="width:10px;height:10px;background:${MO_GC[g]+op};border:1px solid ${MO_GC[g]};display:inline-block;border-radius:2px"></span>`).join('')}</span>${t}`;
     legWrap.appendChild(row);
